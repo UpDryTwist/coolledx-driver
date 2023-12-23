@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "coolledx"
+version = "0.1.0"
+description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
+authors = ["UpDryTwist <tathamg@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.creosote]
+venvs = [".venv"]
+paths = ["coolledx", "tests", "utils"]
+deps-file = "pyproject.toml"
+sections = ["tool.poetry.dependencies"]
+
+[tool.codespell]
+ignore-words-list = "CoolLED,CoolLEDX"
+uri-ignore-words-list = "Classess"
+skip = "pyproject.toml,build,dist,.venv,.git,*.png,*.jpg,*.jpeg,*.gif,*.bmp,*.ico,*.svg,*.pyc,*.pyo,*.pyd,*.so,*.dll,*.dylib,*.exe,*.bin,*.hex,*.obj,*.o,*.a,*.lib,*.dll.a,*.db,*.sqlite,*.sqlite3"
+
+[tool.isort]
+profile = "black"
+
+[tool.pyright]
+venv = ".venv"
+venvPath = "."
+pythonVersion = "3.11"
+# TODO: fix for earlier Python versions
+# Include this if you're feeling you have too much time on your hands
+# typeCheckingMode = "strict"
+
+[tool.poetry.dependencies]
+# Bleak is limited to Python 3.8+ and specifies a maximum of 3.12
+# We require 3.11 due to some of the use of enums
+# TODO: Fix this when Bleak supports Python > 3.12
+python = "^3.11,<3.13"
+bleak = "^0.21.1"
+Pillow = "^10.1.0"
+
+[tool.poetry.group.dev.dependencies]
+poetry = "^1.7.1"
+pytest = "^7.4.3"
+pre-commit = "^3.6.0"
+ruff = "^0.1.9"
+black = "^23.12.1"
+make = "^0.1.6.post2"
+codespell = "^2.2.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
