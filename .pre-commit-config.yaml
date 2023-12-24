@@ -79,7 +79,9 @@ repos:
     rev: v1.6.26
     hooks:
       # Note:  this requires that you install actionlint as a system command
+      #        . . . so it's currently only running in the manual checks
       - id: actionlint-system
+        stages: [ manual ]
 
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0

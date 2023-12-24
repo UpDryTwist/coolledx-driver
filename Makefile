@@ -31,6 +31,10 @@ unit:
 check:
 	@poetry run pre-commit run --all-files
 
+check-github-actions:
+	@poetry run pre-commit run --hook-stage manual actionlint
+
+
 lint:
 	@poetry run flake8
 
