@@ -30,6 +30,7 @@ class Command(abc.ABC):
 
     sign_height: int
     sign_width: int
+    dimensions_set: bool = False
 
     @abc.abstractmethod
     def get_command_raw_data_chunks(self) -> List[bytearray]:
@@ -57,14 +58,15 @@ class Command(abc.ABC):
         """Set the dimensions of the sign."""
         self.sign_width = width
         self.sign_height = height
+        self.dimensions_set = True
 
     @property
     def get_device_width(self) -> int:
-        return self.sign_width if self.sign_width else DEFAULT_DEVICE_WIDTH
+        return self.sign_width if self.dimensions_set else DEFAULT_DEVICE_WIDTH
 
     @property
     def get_device_height(self) -> int:
-        return self.sign_height if self.sign_height else DEFAULT_DEVICE_HEIGHT
+        return self.sign_height if self.dimensions_set else DEFAULT_DEVICE_HEIGHT
 
     @staticmethod
     def expect_notify() -> bool:
