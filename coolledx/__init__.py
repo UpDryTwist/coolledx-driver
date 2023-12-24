@@ -1,5 +1,7 @@
 from enum import IntEnum, StrEnum
 
+__version__ = "0.0.1"
+
 
 class Mode(IntEnum):
     """The ways that text can move"""

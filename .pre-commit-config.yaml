@@ -78,7 +78,8 @@ repos:
   - repo: https://github.com/rhysd/actionlint
     rev: v1.6.26
     hooks:
-      - id: actionlint-docker
+      # Note:  this requires that you install actionlint as a system command
+      - id: actionlint-system
 
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0

@@ -14,6 +14,9 @@ setup:
 	@poetry init
 	@pre-commit install
 
+system-requirements-install:
+	@installer-install rhysd/actionlint
+
 install:
 	@poetry install
 
