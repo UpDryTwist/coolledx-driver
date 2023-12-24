@@ -30,3 +30,9 @@ check:
 
 lint:
 	@poetry run flake8
+
+sphinx-start:
+	@poetry run sphinx-quickstart docs
+
+sphinx-build:
+	@poetry run sphinx-build -b html docs docs/_build

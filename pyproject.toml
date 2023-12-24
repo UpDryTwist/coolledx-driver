@@ -6,6 +6,13 @@ authors = ["UpDryTwist <tathamg@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
+[project]
+name = "coolledx"
+version = "0.1.0"
+description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
+authors = ["UpDryTwist <tathamg@gmail.com>"]
+dynamic = ["version", "description"]
+
 [tool.creosote]
 venvs = [".venv"]
 paths = ["coolledx", "tests", "utils"]
@@ -44,6 +51,8 @@ ruff = "^0.1.9"
 black = "^23.12.1"
 make = "^0.1.6.post2"
 codespell = "^2.2.6"
+sphinx = "^7.2.6"
+sphinx-rtd-theme = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
