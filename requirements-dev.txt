@@ -1,6 +1,0 @@
-codespell
-make
-poetry
-pre-commit
-pytest
-ruff

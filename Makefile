@@ -36,3 +36,9 @@ sphinx-start:
 
 sphinx-build:
 	@poetry run sphinx-build -b html docs docs/_build
+
+publish-to-pypi:
+	@poetry publish --build
+
+build:
+	@poetry build

@@ -5,13 +5,25 @@ description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 a
 authors = ["UpDryTwist <tathamg@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/UpDryTwist/coolledx-driver"
+documentation = "https://coolledx-driver.readthedocs.io/en/latest/"
+keywords = ["coolled", "coolledx", "led", "sign", "coolled1248"]
 
 [project]
 name = "coolledx"
 version = "0.1.0"
 description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
+readme = "README.md"
+license = "MIT"
+keywords = ["coolled", "coolledx", "led", "sign", "coolled1248"]
 authors = ["UpDryTwist <tathamg@gmail.com>"]
-dynamic = ["version", "description"]
+maintainers = ["UpDryTwist <tathamg@gmail.com>"]
+dynamic = ["version"]
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "bleak = ^0.21.1",
+    "Pillow = ^10.1.0",
+]
 
 [tool.creosote]
 venvs = [".venv"]
