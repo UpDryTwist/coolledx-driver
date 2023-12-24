@@ -1,6 +1,7 @@
 """Tests for Command"""
 # pylint: disable=line-too-long
 
+import platform
 from typing import List
 
 import pytest
@@ -43,6 +44,11 @@ def test_set_text():
     The appropriate generate_testdata.py command for this is:
     python3 tests/generate_testdata.py --text "Hello, <#00ff00>world!" --color "#FF0000" --font arial --font-height 13  # noqa: E501
     """
+
+    # This test will only run on Windows 11, probably, as it relies on specific
+    # font rendering.
+    if platform.system() != "Windows" or platform.release() != "11":
+        return
 
     correct_values = [
         "0100880206000206150000800000000000000000000000000000000000000000000000"
