@@ -422,7 +422,7 @@ class SetJT(Command):
 
     def get_command_raw_data_chunks(self) -> List[bytearray]:
         #raw_data = create_image_payload(
-        raw_data = create_JT_payload(
+        raw_data, render_as_image = create_JT_payload(
             self.filename,
             background_color=self.background_color,
             sign_width=self.get_device_width,
@@ -432,7 +432,7 @@ class SetJT(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment
         )
-        return self.chop_up_data(raw_data[0], 3 if raw_data[1] else 4)
+        return self.chop_up_data(raw_data, 3 if render_as_image else 4)
 
     @staticmethod
     def expect_notify() -> bool:
