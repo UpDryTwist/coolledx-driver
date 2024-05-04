@@ -57,10 +57,10 @@ Pillow = "^10.1.0"
 
 [tool.poetry.group.dev.dependencies]
 poetry = "^1.7.1"
-pytest = "^7.4.3"
+pytest = ">=7.4.3,<9.0.0"
 pre-commit = "^3.6.0"
 ruff = ">=0.1.9,<0.4.0"
-black = "^23.12.1"
+black = ">=23.12.1,<25.0.0"
 make = "^0.1.6.post2"
 codespell = "^2.2.6"
 sphinx = "^7.2.6"
