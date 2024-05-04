@@ -19,7 +19,7 @@ from coolledx import (
     WidthTreatment,
 )
 
-from .render import create_animation_payload, create_image_payload, create_text_payload
+from .render import create_animation_payload, create_image_payload, create_text_payload, create_JT_payload
 
 DEFAULT_DEVICE_WIDTH = 96
 DEFAULT_DEVICE_HEIGHT = 16
@@ -345,7 +345,6 @@ class SetImage(Command):
     def expect_notify() -> bool:
         return True
 
-
 class SetAnimation(Command):
     """Set the display to an animation from an animated image file"""
 
@@ -388,6 +387,52 @@ class SetAnimation(Command):
             vertical_alignment=self.vertical_alignment,
         )
         return self.chop_up_data(raw_data, 4)
+
+    @staticmethod
+    def expect_notify() -> bool:
+        return True
+
+class SetJT(Command):
+    """Set the display image by loading from a JT file"""
+
+    filename: str
+    width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS
+    height_treatment: HeightTreatment = HeightTreatment.CROP_PAD
+    vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER
+    horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE
+    background_color: str
+
+
+    def __init__(
+        self,
+        filename: str,
+        background_color: str = DEFAULT_BACKGROUND_COLOR,
+        width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
+        height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
+        horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
+        vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
+
+    ) -> None:
+        self.filename = filename
+        self.background_color = background_color
+        self.width_treatment = width_treatment
+        self.height_treatment = height_treatment
+        self.horizontal_alignment = horizontal_alignment
+        self.vertical_alignment = vertical_alignment
+
+    def get_command_raw_data_chunks(self) -> List[bytearray]:
+        #raw_data = create_image_payload(
+        raw_data = create_JT_payload(
+            self.filename,
+            background_color=self.background_color,
+            sign_width=self.get_device_width,
+            sign_height=self.get_device_height,
+            width_treatment=self.width_treatment,
+            height_treatment=self.height_treatment,
+            horizontal_alignment=self.horizontal_alignment,
+            vertical_alignment=self.vertical_alignment
+        )
+        return self.chop_up_data(raw_data[0], 3 if raw_data[1] else 4)
 
     @staticmethod
     def expect_notify() -> bool:

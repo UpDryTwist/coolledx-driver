@@ -28,6 +28,7 @@ DEFAULT_SPEED = None
 DEFAULT_BRIGHTNESS = None
 DEFAULT_ANIMATION = None
 DEFAULT_IMAGE = None
+DEFAULT_JT = None
 
 
 def auto_int(x):
@@ -148,5 +149,8 @@ def parse_standard_arguments() -> argparse.Namespace:
         type=str,
         default=DEFAULT_VERTICAL_ALIGNMENT,
         help="Vertical alignment (top/center/bottom)",
+    )
+    parser.add_argument(
+        "-jt", "--jtfile", default=DEFAULT_JT, help="JT file to display"
     )
     return parser.parse_args()

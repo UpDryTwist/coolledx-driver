@@ -1,5 +1,6 @@
 """Rendering functions for the CoolLEDx sign."""
 
+import json
 from typing import Optional, Tuple, Union
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
@@ -194,6 +195,7 @@ def get_separate_pixel_bytefields(
                 tmp_R, tmp_G, tmp_B = 0, 0, 0
 
     return barr_R, barr_G, barr_B
+
 
 
 def get_separate_pixel_bytefields_for_animation(
@@ -427,3 +429,55 @@ def create_animation_payload(
     pixel_payload += pixel_bits_all
 
     return pixel_payload
+
+
+def create_JT_payload(
+    filename: str,
+    sign_width: int,
+    sign_height: int,
+    background_color: str = DEFAULT_BACKGROUND_COLOR,
+    width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
+    height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
+    horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
+    vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER
+) -> bytearray:
+#    im = Image.open(filename).convert("RGB")
+     f = open(filename,'r')
+     jtf =f.read()
+     jt = json.loads(jtf)[0]           #json.loads(f)[0] JT data to dictionary
+     f.close()
+     if 'aniData' in list(jt['data']):
+       jtrgbdata     = jt['data']['aniData']
+       render_as_image = False
+     if 'graffitiData' in list(jt['data']):
+       render_as_image = True
+       jtrgbdata     = jt['data']['graffitiData']
+     sign_width      = jt['data']['pixelWidth']
+     sign_height     = jt['data']['pixelHeight']
+     if 'frameNum' in list(jt['data']):
+       frames        = jt['data']['frameNum']
+     if 'delays' in list(jt['data']):
+       speed         = jt['data']['delays']
+ 
+     # create the image payload
+     pixel_payload = bytearray()
+     # unknown 24 zero-bytes
+     pixel_payload += bytearray(24)
+     #all the pixel-bits RGB
+     #pixel_bits_all = bytearray().join([bR, bG, bB])
+
+     #--------animation-------------------
+     if not render_as_image:
+     # number of frames
+       pixel_payload += frames.to_bytes(1, byteorder="big")
+     # speed (16-bit)
+       pixel_payload += speed.to_bytes(2, byteorder="big")
+     #--------animation-------------------
+
+     pixel_bits_all = bytearray(jtrgbdata)
+    # size of the pixel payload in its un-split form.
+     pixel_payload += len(pixel_bits_all).to_bytes(2, byteorder="big")
+    # all the pixel-bits
+     pixel_payload += pixel_bits_all
+
+     return pixel_payload,render_as_image
