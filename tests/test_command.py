@@ -1,6 +1,8 @@
 """Tests for Command"""
-# pylint: disable=line-too-long
+import inspect
+import os
 
+# pylint: disable=line-too-long
 import platform
 from typing import List
 
@@ -8,6 +10,15 @@ import pytest
 
 from coolledx.commands import Command, SetAnimation, SetImage, SetSpeed, SetText
 from coolledx.render import HeightTreatment, HorizontalAlignment, VerticalAlignment
+
+
+def file_path_in_test_dir(file_name: str) -> str:
+    """Return the path to a file in the tests directory"""
+    tests_path = os.path.dirname(
+        os.path.abspath(inspect.getfile(inspect.currentframe()))  # type: ignore
+    )
+
+    return f"{tests_path}/{file_name}"
 
 
 def test_escape_bytes():
@@ -112,7 +123,7 @@ def test_set_image():
 
     confirm_chunks(
         SetImage(
-            "test-image.png",
+            file_path_in_test_dir("test-image.png"),
             height_treatment=HeightTreatment.CROP_PAD,
             horizontal_alignment=HorizontalAlignment.CENTER,
             vertical_alignment=VerticalAlignment.BOTTOM,
@@ -215,7 +226,8 @@ def test_set_animation():
 
     confirm_chunks(
         SetAnimation(
-            "test-animation.gif", horizontal_alignment=HorizontalAlignment.LEFT
+            file_path_in_test_dir("test-animation.gif"),
+            horizontal_alignment=HorizontalAlignment.LEFT,
         ).get_command_chunks(),
         correct_values,
     )
