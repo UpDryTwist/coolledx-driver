@@ -19,7 +19,12 @@ from coolledx import (
     WidthTreatment,
 )
 
-from .render import create_animation_payload, create_image_payload, create_text_payload, create_JT_payload
+from .render import (
+    create_animation_payload,
+    create_image_payload,
+    create_JT_payload,
+    create_text_payload,
+)
 
 DEFAULT_DEVICE_WIDTH = 96
 DEFAULT_DEVICE_HEIGHT = 16
@@ -345,6 +350,7 @@ class SetImage(Command):
     def expect_notify() -> bool:
         return True
 
+
 class SetAnimation(Command):
     """Set the display to an animation from an animated image file"""
 
@@ -392,6 +398,7 @@ class SetAnimation(Command):
     def expect_notify() -> bool:
         return True
 
+
 class SetJT(Command):
     """Set the display image by loading from a JT file"""
 
@@ -402,7 +409,6 @@ class SetJT(Command):
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE
     background_color: str
 
-
     def __init__(
         self,
         filename: str,
@@ -411,7 +417,6 @@ class SetJT(Command):
         height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
         horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
         vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
-
     ) -> None:
         self.filename = filename
         self.background_color = background_color
@@ -421,7 +426,7 @@ class SetJT(Command):
         self.vertical_alignment = vertical_alignment
 
     def get_command_raw_data_chunks(self) -> List[bytearray]:
-        #raw_data = create_image_payload(
+        # raw_data = create_image_payload(
         raw_data, render_as_image = create_JT_payload(
             self.filename,
             background_color=self.background_color,
@@ -430,7 +435,7 @@ class SetJT(Command):
             width_treatment=self.width_treatment,
             height_treatment=self.height_treatment,
             horizontal_alignment=self.horizontal_alignment,
-            vertical_alignment=self.vertical_alignment
+            vertical_alignment=self.vertical_alignment,
         )
         return self.chop_up_data(raw_data, 3 if render_as_image else 4)
 

@@ -74,7 +74,7 @@ For some of my protocol analysis, I found it useful to do the following:
 This helped me get over some spots where I was a bit lost in the handshakes, or making
 some bad assumptions about what was or was not working.
 
-## Panel Communication 
+## Panel Communication
 
 CoolLED1248<br>
 Versions 2.x of the Android app can import and export JT files.  If you have problems importing or with other functions, try version 2.1.4.
@@ -89,7 +89,7 @@ To install the CoolLEDX driver on your system:<br>
 
         git clone https://github.com/UpDryTwist/coolledx-driver.git
 
-2.  From the coolledx-driver folder, copy the coolledx folder to your python library 
+2.  From the coolledx-driver folder, copy the coolledx folder to your python library
 
         cd /yourpath/coolledx-driver/
         cp -a coolledx /home/<yourusername>/.local/lib/python3.8/site-packages/.
@@ -110,7 +110,7 @@ To install the CoolLEDX driver on your system:<br>
     #---then edit the first few lines of coolledx/__init__.py file----
     #from enum import IntEnum, StrEnum
     from enum import IntEnum
-    from strenum import StrEnum 
+    from strenum import StrEnum
     #-----------------------------------------------------------------
     </pre>
 
@@ -142,7 +142,7 @@ To install the CoolLEDX driver on your system:<br>
 <b>To send an image to the panel:</b>
 
         python3 utils/tweak_sign.py -a YOUR:MAC:FROM:SCAN:PY -i yourimage.png
-    
+
 <b>To send a JT file to the panel:</b>
 
         python3 utils/tweak_sign.py -a YOUR:MAC:FROM:SCAN:PY -jt myjtfile.jt
