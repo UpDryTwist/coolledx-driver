@@ -450,7 +450,7 @@ def create_JT_payload(
        jtrgbdata     = jt['data']['aniData']
        render_as_image = False
      if 'graffitiData' in list(jt[list(jt.keys())[0]]):
-       render_as_image=True, 
+       render_as_image = True
        jtrgbdata     = jt['data']['graffitiData']
      sign_width      = jt['data']['pixelWidth']
      sign_height     = jt['data']['pixelHeight']
