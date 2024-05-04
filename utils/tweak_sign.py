@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """Send some commands to our sign . . ."""
 
 import asyncio
@@ -9,6 +10,7 @@ from coolledx.commands import (
     SetAnimation,
     SetBrightness,
     SetImage,
+    SetJT,                          #<- add this
     SetMode,
     SetSpeed,
     SetText,
@@ -54,6 +56,17 @@ async def main():
                 SetAnimation(
                     args.animation,
                     speed=args.animation_speed,
+                    background_color=args.background_color,
+                    width_treatment=args.width_treatment,
+                    height_treatment=args.height_treatment,
+                    horizontal_alignment=args.horizontal_alignment,
+                    vertical_alignment=args.vertical_alignment,
+                )
+            )
+        if args.jtfile:
+            await client.send_command(
+                SetJT(
+                    args.jtfile,
                     background_color=args.background_color,
                     width_treatment=args.width_treatment,
                     height_treatment=args.height_treatment,
