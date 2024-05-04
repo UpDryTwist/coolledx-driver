@@ -446,17 +446,17 @@ def create_JT_payload(
      jtf =f.read()
      jt = json.loads(jtf)[0]           #json.loads(f)[0] JT data to dictionary
      f.close()
-     if 'aniData' in list(jt[list(jt.keys())[0]]):
+     if 'aniData' in list(jt['data']):
        jtrgbdata     = jt['data']['aniData']
        render_as_image = False
-     if 'graffitiData' in list(jt[list(jt.keys())[0]]):
+     if 'graffitiData' in list(jt['data']):
        render_as_image = True
        jtrgbdata     = jt['data']['graffitiData']
      sign_width      = jt['data']['pixelWidth']
      sign_height     = jt['data']['pixelHeight']
-     if 'frameNum' in list(jt[list(jt.keys())[0]]):
+     if 'frameNum' in list(jt['data']):
        frames        = jt['data']['frameNum']
-     if 'delays' in list(jt[list(jt.keys())[0]]):
+     if 'delays' in list(jt['data']):
        speed         = jt['data']['delays']
  
      # create the image payload
