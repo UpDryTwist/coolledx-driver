@@ -24,7 +24,7 @@ pre-commit-autoupdate:
 	@poetry run pre-commit autoupdate
 
 unit:
-	@poetry run coverage run pytest -s -v
+	@poetry run coverage run -m pytest -s -v
 	@poetry run coverage report -m
 	@poetry run coverage html
 
