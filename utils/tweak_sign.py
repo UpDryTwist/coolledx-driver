@@ -10,7 +10,7 @@ from coolledx.commands import (
     SetAnimation,
     SetBrightness,
     SetImage,
-    SetJT,                          #<- add this
+    SetJT,  # <- add this
     SetMode,
     SetSpeed,
     SetText,

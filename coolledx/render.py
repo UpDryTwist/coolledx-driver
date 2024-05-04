@@ -120,8 +120,12 @@ def get_separate_pixel_bytefields(
     if output_height % 8 != 0:
         raise ValueError("target-height needs to be divisible by 8")
 
+    # Declare these to stabilize type checking
+    defaultPx: Tuple[int, int, int]
+    px: Tuple[int, int, int]
+
     image_width, image_height = img.size
-    defaultPx = ImageColor.getrgb(bgColor)
+    defaultPx = ImageColor.getrgb(bgColor)  # type: ignore
 
     left_offset = 0
     top_offset = 0
@@ -197,9 +201,8 @@ def get_separate_pixel_bytefields(
     return barr_R, barr_G, barr_B
 
 
-
 def get_separate_pixel_bytefields_for_animation(
-    anim,
+    anim: Image.Image,
     sign_width: int,
     sign_height: int,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
@@ -232,7 +235,7 @@ def get_separate_pixel_bytefields_for_animation(
 
     animR, animG, animB = bytearray(), bytearray(), bytearray()
 
-    for frame in range(0, anim.n_frames):
+    for frame in range(0, anim.n_frames if hasattr(anim, "n_frames") else 1):  # type: ignore
         # switch to next frame
         anim.seek(frame)
 
@@ -403,7 +406,7 @@ def create_animation_payload(
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> bytearray:
     anim = Image.open(filename)
-    frames = anim.n_frames
+    frames = anim.n_frames if hasattr(anim, "n_frames") else 1  # type: ignore
     animR, animG, animB = get_separate_pixel_bytefields_for_animation(
         anim,
         sign_width=sign_width,
@@ -439,45 +442,51 @@ def create_JT_payload(
     width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
     height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
-    vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER
-) -> bytearray:
-#    im = Image.open(filename).convert("RGB")
-     f = open(filename,'r')
-     jtf =f.read()
-     jt = json.loads(jtf)[0]           #json.loads(f)[0] JT data to dictionary
-     f.close()
-     if 'aniData' in list(jt['data']):
-       jtrgbdata     = jt['data']['aniData']
-       render_as_image = False
-     if 'graffitiData' in list(jt['data']):
-       render_as_image = True
-       jtrgbdata     = jt['data']['graffitiData']
-     sign_width      = jt['data']['pixelWidth']
-     sign_height     = jt['data']['pixelHeight']
-     if 'frameNum' in list(jt['data']):
-       frames        = jt['data']['frameNum']
-     if 'delays' in list(jt['data']):
-       speed         = jt['data']['delays']
- 
-     # create the image payload
-     pixel_payload = bytearray()
-     # unknown 24 zero-bytes
-     pixel_payload += bytearray(24)
-     #all the pixel-bits RGB
-     #pixel_bits_all = bytearray().join([bR, bG, bB])
+    vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
+) -> Tuple[bytearray, bool]:
+    #    im = Image.open(filename).convert("RGB")
+    render_as_image = False  # Until proven otherwise . .
+    frames = 1  # Until proven otherwise . .
+    speed = 0  # Until proven otherwise . .
+    jtrgbdata = None  # Until proven otherwise . .
 
-     #--------animation-------------------
-     if not render_as_image:
-     # number of frames
-       pixel_payload += frames.to_bytes(1, byteorder="big")
-     # speed (16-bit)
-       pixel_payload += speed.to_bytes(2, byteorder="big")
-     #--------animation-------------------
+    with open(filename) as f:
+        jtf = f.read()
+        jt = json.loads(jtf)[0]  # json.loads(f)[0] JT data to dictionary
+    if "aniData" in list(jt["data"]):
+        jtrgbdata = jt["data"]["aniData"]
+        render_as_image = False
+    if "graffitiData" in list(jt["data"]):
+        render_as_image = True
+        jtrgbdata = jt["data"]["graffitiData"]
+    # Unused - prefix with _ to suppress warning
+    _sign_width = jt["data"]["pixelWidth"]
+    _sign_height = jt["data"]["pixelHeight"]
+    if "frameNum" in list(jt["data"]):
+        frames = jt["data"]["frameNum"]
+    if "delays" in list(jt["data"]):
+        speed = jt["data"]["delays"]
 
-     pixel_bits_all = bytearray(jtrgbdata)
-    # size of the pixel payload in its un-split form.
-     pixel_payload += len(pixel_bits_all).to_bytes(2, byteorder="big")
-    # all the pixel-bits
-     pixel_payload += pixel_bits_all
+    # create the image payload
+    pixel_payload = bytearray()
+    # unknown 24 zero-bytes
+    pixel_payload += bytearray(24)
+    # all the pixel-bits RGB
+    # pixel_bits_all = bytearray().join([bR, bG, bB])
 
-     return pixel_payload,render_as_image
+    # --------animation-------------------
+    if not render_as_image:
+        # number of frames
+        pixel_payload += frames.to_bytes(1, byteorder="big")
+        # speed (16-bit)
+        pixel_payload += speed.to_bytes(2, byteorder="big")
+    # --------animation-------------------
+
+    if jtrgbdata is not None:
+        pixel_bits_all = bytearray(jtrgbdata)
+        # size of the pixel payload in its un-split form.
+        pixel_payload += len(pixel_bits_all).to_bytes(2, byteorder="big")
+        # all the pixel-bits
+        pixel_payload += pixel_bits_all
+
+    return pixel_payload, render_as_image
