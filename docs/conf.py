@@ -5,9 +5,16 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
+import sys
+
+sys.path.append(os.path.abspath("../coolledx"))
+sys.path.append(os.path.abspath("./coolledx"))
+sys.path.append(os.path.abspath("."))
+sys.path.append(os.path.abspath(".."))
 
 project = "coolledx"
-copyright = "2023, Greg Tatham"
+copyright = "2024, Greg Tatham"
 author = "Greg Tatham"
 
 # -- General configuration ---------------------------------------------------
