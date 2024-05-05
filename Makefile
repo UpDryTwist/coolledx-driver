@@ -34,7 +34,6 @@ check:
 check-github-actions:
 	@poetry run pre-commit run --hook-stage manual actionlint
 
-
 lint:
 	@poetry run flake8
 
