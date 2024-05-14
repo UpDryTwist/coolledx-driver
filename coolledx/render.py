@@ -71,7 +71,7 @@ def render_text_to_image(
     # create image canvas
     img=Image.new(
       "RGBA",
-      (2048,16),
+      (2048,64),
       (ImageColor.getrgb(background_color)[0],ImageColor.getrgb(background_color)[1],ImageColor.getrgb(background_color)[2],255) 
     )
     draw = ImageDraw.Draw(img)
