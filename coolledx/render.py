@@ -95,7 +95,7 @@ def render_text_to_image(
     del draw
 
     # crop the canvas
-    return img.crop((0, 0, x_offset, y_max+2))  #2 pixel vertical adjustment prevents bottom text cut off
+    return img.crop((0, 0, x_offset, y_max+1))  #pixel vertical adjustment prevents bottom text cut off
 
 
 
