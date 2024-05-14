@@ -69,10 +69,10 @@ def render_text_to_image(
                 parts.append((color, text))
 
     # create image canvas
-    img = Image.new(
-        "RGBA",
-        (2048, 64),
-        background_color if background_color != DEFAULT_BACKGROUND_COLOR else 0,
+    img=Image.new(
+      "RGBA",
+      (2048,16),
+      (ImageColor.getrgb(background_color)[0],ImageColor.getrgb(background_color)[1],ImageColor.getrgb(background_color)[2],255) 
     )
     draw = ImageDraw.Draw(img)
 
@@ -95,7 +95,8 @@ def render_text_to_image(
     del draw
 
     # crop the canvas
-    return img.crop((0, 0, x_offset, y_max))
+    return img.crop((0, 0, x_offset, y_max+2))  #2 pixel vertical adjustment prevents bottom text cut off
+
 
 
 def get_separate_pixel_bytefields(
