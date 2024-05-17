@@ -45,7 +45,7 @@ for letter in text:
 
 cmd+="\""
 otherargs = ""
-print(sys.argv)
+#print(sys.argv)
 for a in range (oidx,len(sys.argv)):
   otherargs += " " + sys.argv[a]
 cmd = "./tweak_sign.py -t " + cmd + otherargs
