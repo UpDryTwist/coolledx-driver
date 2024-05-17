@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+#creates a colorful text message
+#color mix can be specified using rgbymcwk as 2nd argument
+
 import sys,os
 
 if len(sys.argv)<2:
