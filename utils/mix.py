@@ -25,6 +25,7 @@ cidx='rgbymcw'
 i=0
 cmd="\""
 text=sys.argv[1]
+oidx=len(sys.argv)
 
 if len(sys.argv)>2:
   j=True
