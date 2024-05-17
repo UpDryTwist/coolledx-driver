@@ -282,13 +282,13 @@ def create_image_output(
 
     if text is not None:
         # length of string (pretty irrelevant because the image will be used anyway)
-        pixel_payload += len(text).to_bytes(1, byteorder="big")
+        pixel_payload += len(text).to_bytes(2, byteorder="big")  #changed to 2 to allow length>255
 
         # character string (pretty irrelevant because the image will be used anyway)
-        char_metadata = bytearray(80)
+        char_metadata = bytearray(79)          #changed from 80 to allow for 2-byte text message length
         for i, _ in enumerate(text):
-            if i < 80:
-                char_metadata[i] = 0x30
+            if i < 79:                         #changed from 80 to allow for 2-byte text message length
+                char_metadata[i] = 0x30        
         pixel_payload += char_metadata
 
     width, height = image.size
