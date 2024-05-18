@@ -1,5 +1,5 @@
 
-.PHONY: help setup install test unit check lint
+.PHONY: help setup install test unit check lint full-commit-ready
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -9,6 +9,8 @@ help:
 	@echo "  unit       to run unit tests"
 	@echo "  check      to run pre-commit checks"
 	@echo "  lint       to run flake8"
+	@echo "  commit-ready      to run pre-commit checks, unit
+	@echo "  full-commit-ready to update all dev tools and run pre-commit checks"
 
 setup:
 	@poetry init
@@ -33,6 +35,10 @@ check:
 
 check-github-actions:
 	@poetry run pre-commit run --hook-stage manual actionlint
+
+commit-ready: check unit
+
+full-commit-ready: pre-commit-autoupdate commit-ready
 
 lint:
 	@poetry run flake8
