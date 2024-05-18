@@ -1,4 +1,5 @@
 """Tests for Command"""
+
 import inspect
 import os
 
