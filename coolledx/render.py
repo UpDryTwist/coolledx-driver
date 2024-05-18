@@ -69,10 +69,10 @@ def render_text_to_image(
                 parts.append((color, text))
 
     # create image canvas
-    img = Image.new(
-        "RGBA",
-        (2048, 64),
-        background_color if background_color != DEFAULT_BACKGROUND_COLOR else 0,
+    img=Image.new(
+      "RGBA",
+      (2048,64),
+      (ImageColor.getrgb(background_color)[0],ImageColor.getrgb(background_color)[1],ImageColor.getrgb(background_color)[2],255) 
     )
     draw = ImageDraw.Draw(img)
 
@@ -95,7 +95,8 @@ def render_text_to_image(
     del draw
 
     # crop the canvas
-    return img.crop((0, 0, x_offset, y_max))
+    return img.crop((0, 0, x_offset, y_max+1))  #pixel vertical adjustment prevents bottom text cut off
+
 
 
 def get_separate_pixel_bytefields(
@@ -281,13 +282,13 @@ def create_image_output(
 
     if text is not None:
         # length of string (pretty irrelevant because the image will be used anyway)
-        pixel_payload += len(text).to_bytes(1, byteorder="big")
+        pixel_payload += len(text).to_bytes(2, byteorder="big")  #changed to 2 to allow length>255
 
         # character string (pretty irrelevant because the image will be used anyway)
-        char_metadata = bytearray(80)
+        char_metadata = bytearray(79)          #changed from 80 to allow for 2-byte text message length
         for i, _ in enumerate(text):
-            if i < 80:
-                char_metadata[i] = 0x30
+            if i < 79:                         #changed from 80 to allow for 2-byte text message length
+                char_metadata[i] = 0x30        
         pixel_payload += char_metadata
 
     width, height = image.size
