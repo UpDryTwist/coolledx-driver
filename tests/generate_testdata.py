@@ -1,12 +1,12 @@
 """
-   OK, this is a bit self-referential . . . Use this to generate data for the tests.
-   Obviously, only do this when you know that your code is good, so that the test
-   data is good!
+OK, this is a bit self-referential . . . Use this to generate data for the tests.
+Obviously, only do this when you know that your code is good, so that the test
+data is good!
 
-   For example:
-   python3 tests/generate_testdata.py --text "Hello, <#00ff00>world!" --color "#FF0000" --font arial --font-height 13   # noqa: E501
-   python3 tests/generate_testdata.py --image test-image.png --height-treatment crop-pad --horizontal-alignment center --vertical-alignment bottom   # noqa: E501
-   python3 tests/generate_testdata.py --animation test-animation.gif --horizontal-alignment left   # noqa: E501
+For example:
+python3 tests/generate_testdata.py --text "Hello, <#00ff00>world!" --color "#FF0000" --font arial --font-height 13   # noqa: E501
+python3 tests/generate_testdata.py --image test-image.png --height-treatment crop-pad --horizontal-alignment center --vertical-alignment bottom   # noqa: E501
+python3 tests/generate_testdata.py --animation test-animation.gif --horizontal-alignment left   # noqa: E501
 """
 
 from coolledx.argparser import parse_standard_arguments
