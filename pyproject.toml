@@ -58,7 +58,7 @@ Pillow = "^10.1.0"
 [tool.poetry.group.dev.dependencies]
 poetry = "^1.7.1"
 pytest = ">=7.4.3,<9.0.0"
-pre-commit = "^3.6.0"
+pre-commit = ">=3.6,<5.0"
 ruff = ">=0.1.9,<0.7.0"
 black = ">=23.12.1,<25.0.0"
 make = "^0.1.6.post2"
