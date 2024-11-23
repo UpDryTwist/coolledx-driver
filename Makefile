@@ -10,12 +10,12 @@ VERSION = $(shell poetry version | cut -d' ' -f2)
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
-	@echo "  setup      to setup project"
-	@echo "  install    to install dependencies"
-	@echo "  test       to run all tests"
-	@echo "  unit       to run unit tests"
-	@echo "  check      to run pre-commit checks"
-	@echo "  lint       to run flake8"
+	@echo "  setup             to setup project"
+	@echo "  install           to install dependencies"
+	@echo "  unit              to run unit tests"
+	@echo "  check             to run pre-commit checks"
+	@echo "  commit-ready      to run pre-commit checks and unit tests"
+	@echo "  full-commit-ready to run pre-commit checks, unit tests, and bump version"
 
 setup:
 	@poetry init
