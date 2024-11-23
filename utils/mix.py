@@ -39,8 +39,8 @@ oidx = len(sys.argv)
 if len(sys.argv) > 2:
     j = True
     oidx = 2
-    for lx in sys.argv[2]:
-        if "rgbymcwk".find(lx) < 0:
+    for color_char in sys.argv[2]:
+        if "rgbymcwk".find(color_char) < 0:
             j = False
             break
     if j:
