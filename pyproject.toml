@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coolledx"
-version = "0.1.0"
+version = "0.1.0-dev2"
 description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
 authors = ["UpDryTwist <tathamg@gmail.com>"]
 license = "MIT"
@@ -11,7 +11,7 @@ keywords = ["coolled", "coolledx", "led", "sign", "coolled1248"]
 
 [project]
 name = "coolledx"
-version = "0.1.0"
+version = "0.1.0-final1"
 description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
 readme = "README.md"
 license = "MIT"
@@ -22,7 +22,7 @@ dynamic = ["version"]
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "bleak = ^0.21.1",
-    "Pillow = ^10.1.0",
+    "Pillow = ^10.1.0-final1",
 ]
 
 [tool.creosote]
@@ -48,24 +48,23 @@ pythonVersion = "3.11"
 # typeCheckingMode = "strict"
 
 [tool.poetry.dependencies]
-# Bleak is limited to Python 3.8+ and specifies a maximum of 3.12
+# Bleak is limited to Python 3.8+, < 3.14
 # We require 3.11 due to some of the use of enums
-# TODO: Fix this when Bleak supports Python > 3.12
-python = "^3.11,<3.13"
-bleak = ">=0.21.1,<0.23.0"
-Pillow = "^10.1.0"
+python = ">=3.11,<3.14"
+bleak = "^0.22.3"
+Pillow = "^11.0.0"
 
 [tool.poetry.group.dev.dependencies]
 poetry = "^1.7.1"
 pytest = ">=7.4.3,<9.0.0"
-pre-commit = "^3.6.0"
-ruff = ">=0.1.9,<0.7.0"
-black = ">=23.12.1,<25.0.0"
+pre-commit = "^4.0.1"
+ruff = "^0.8.0"
+black = "^24.10.0"
 make = "^0.1.6.post2"
 codespell = "^2.2.6"
 sphinx = "^7.2.6"
 sphinx-rtd-theme = "^2.0.0"
-pyright = "^1.1.363"
+pyright = "^1.1.389"
 pytest-cov = "^5.0.0"
 bump-my-version = "^0.26.0"
 
