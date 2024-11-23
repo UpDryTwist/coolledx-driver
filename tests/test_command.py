@@ -1,10 +1,10 @@
 """Tests for Command"""
+
 import inspect
 import os
 
 # pylint: disable=line-too-long
 import platform
-from typing import List
 
 import pytest
 
@@ -44,7 +44,7 @@ def test_set_speed():
         SetSpeed(256)
 
 
-def confirm_chunks(chunks: List[bytearray], correct_values: List[str]):
+def confirm_chunks(chunks: list[bytearray], correct_values: list[str]):
     assert len(chunks) == len(correct_values)
     for i in range(len(chunks)):
         assert chunks[i].hex() == correct_values[i]

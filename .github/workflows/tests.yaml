@@ -33,12 +33,12 @@ jobs:
       - name: Set OS Environment Variables (Windows)
         if: runner.os == 'Windows'
         run: |
-          echo 'ACTIVATE_PYTHON_VENV=.venv/scripts/activate' >> $GITHUB_ENV
+          "echo 'ACTIVATE_PYTHON_VENV=.venv/scripts/activate' >> $GITHUB_ENV"
 
       - name: Set OS Environment Variables (not Windows)
         if: runner.os != 'Windows'
         run: |
-          echo 'ACTIVATE_PYTHON_VENV=.venv/bin/activate' >> $GITHUB_ENV
+          "echo 'ACTIVATE_PYTHON_VENV=.venv/bin/activate' >> $GITHUB_ENV"
 
       - name: Check out repository
         uses: actions/checkout@v4

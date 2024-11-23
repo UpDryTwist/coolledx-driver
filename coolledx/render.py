@@ -1,7 +1,6 @@
 """Rendering functions for the CoolLEDx sign."""
 
 import json
-from typing import Optional, Tuple, Union
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
@@ -26,7 +25,7 @@ def render_text_to_image(
     font: str,
     font_height: int = DEFAULT_FONT_SIZE,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
-    color_markers: Union[Tuple[Optional[str], Optional[str]], str] = (
+    color_markers: tuple[str | None, str | None] | str = (
         DEFAULT_START_COLOR_MARKER,
         DEFAULT_END_COLOR_MARKER,
     ),
@@ -69,10 +68,15 @@ def render_text_to_image(
                 parts.append((color, text))
 
     # create image canvas
-    img=Image.new(
-      "RGBA",
-      (2048,64),
-      (ImageColor.getrgb(background_color)[0],ImageColor.getrgb(background_color)[1],ImageColor.getrgb(background_color)[2],255) 
+    img = Image.new(
+        "RGBA",
+        (2048, 64),
+        (
+            ImageColor.getrgb(background_color)[0],
+            ImageColor.getrgb(background_color)[1],
+            ImageColor.getrgb(background_color)[2],
+            255,
+        ),
     )
     draw = ImageDraw.Draw(img)
 
@@ -95,8 +99,9 @@ def render_text_to_image(
     del draw
 
     # crop the canvas
-    return img.crop((0, 0, x_offset, y_max+1))  #pixel vertical adjustment prevents bottom text cut off
-
+    return img.crop(
+        (0, 0, x_offset, y_max + 1)
+    )  # pixel vertical adjustment prevents bottom text cut off
 
 
 def get_separate_pixel_bytefields(
@@ -122,8 +127,8 @@ def get_separate_pixel_bytefields(
         raise ValueError("target-height needs to be divisible by 8")
 
     # Declare these to stabilize type checking
-    defaultPx: Tuple[int, int, int]
-    px: Tuple[int, int, int]
+    defaultPx: tuple[int, int, int]
+    px: tuple[int, int, int]
 
     image_width, image_height = img.size
     defaultPx = ImageColor.getrgb(bgColor)  # type: ignore
@@ -184,7 +189,7 @@ def get_separate_pixel_bytefields(
             ):
                 px = defaultPx
             else:
-                px = img.getpixel((x - left_offset, y - top_offset))
+                px = img.getpixel((x - left_offset, y - top_offset))  # type: ignore
 
             # for each color, add one bit for the current pixel (i.e., 1 if
             # color-component is > 127)
@@ -211,7 +216,7 @@ def get_separate_pixel_bytefields_for_animation(
     height_treatment: HeightTreatment = HeightTreatment.SCALE,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.CENTER,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
-) -> Tuple[bytearray, bytearray, bytearray]:
+) -> tuple[bytearray, bytearray, bytearray]:
     """
     This generates the bytefields for the red, green, and blue components
     :param anim:
@@ -268,7 +273,7 @@ def create_image_output(
     image: Image.Image,
     sign_width: int,
     sign_height: int,
-    text: Optional[str] = None,
+    text: str | None = None,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
     width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
     height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
@@ -282,13 +287,17 @@ def create_image_output(
 
     if text is not None:
         # length of string (pretty irrelevant because the image will be used anyway)
-        pixel_payload += len(text).to_bytes(2, byteorder="big")  #changed to 2 to allow length>255
+        pixel_payload += len(text).to_bytes(
+            2, byteorder="big"
+        )  # changed to 2 to allow length>255
 
         # character string (pretty irrelevant because the image will be used anyway)
-        char_metadata = bytearray(79)          #changed from 80 to allow for 2-byte text message length
+        char_metadata = bytearray(
+            79
+        )  # changed from 80 to allow for 2-byte text message length
         for i, _ in enumerate(text):
-            if i < 79:                         #changed from 80 to allow for 2-byte text message length
-                char_metadata[i] = 0x30        
+            if i < 79:  # changed from 80 to allow for 2-byte text message length
+                char_metadata[i] = 0x30
         pixel_payload += char_metadata
 
     width, height = image.size
@@ -339,7 +348,7 @@ def create_text_payload(
     default_color: str = DEFAULT_COLOR,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
     font_height: int = DEFAULT_FONT_SIZE,
-    color_markers: Union[Tuple[Optional[str], Optional[str]], str] = (
+    color_markers: tuple[str | None, str | None] | str = (
         DEFAULT_START_COLOR_MARKER,
         DEFAULT_END_COLOR_MARKER,
     ),
@@ -444,7 +453,7 @@ def create_JT_payload(
     height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
-) -> Tuple[bytearray, bool]:
+) -> tuple[bytearray, bool]:
     #    im = Image.open(filename).convert("RGB")
     render_as_image = False  # Until proven otherwise . .
     frames = 1  # Until proven otherwise . .

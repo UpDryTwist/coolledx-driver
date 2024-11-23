@@ -2,7 +2,6 @@
 
 import abc
 import re
-from typing import List, Optional, Tuple, Union
 
 from coolledx import (
     DEFAULT_ANIMATION_SPEED,
@@ -38,7 +37,7 @@ class Command(abc.ABC):
     dimensions_set: bool = False
 
     @abc.abstractmethod
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the set of commands as a bytearray."""
         pass
 
@@ -89,7 +88,7 @@ class Command(abc.ABC):
         return bytearray().join([b"\x01", self.escape_bytes(extended_data), b"\x03"])
 
     @staticmethod
-    def split_bytearray(data: bytearray, chunksize: int) -> List[bytearray]:
+    def split_bytearray(data: bytearray, chunksize: int) -> list[bytearray]:
         chunks = [data]
 
         # split the last chunk as long as it is larger than chunksize
@@ -108,7 +107,7 @@ class Command(abc.ABC):
             checksum ^= b
         return checksum
 
-    def chop_up_data(self, data: bytearray, command: int) -> List[bytearray]:
+    def chop_up_data(self, data: bytearray, command: int) -> list[bytearray]:
         # split the content into (128-byte) chunks
         raw_chunks = self.split_bytearray(data, 128)
 
@@ -137,7 +136,7 @@ class Command(abc.ABC):
             )
         return chunks
 
-    def get_command_chunks(self) -> List[bytearray]:
+    def get_command_chunks(self) -> list[bytearray]:
         """Get the command as a bytearray."""
         raw_data_chunks = self.get_command_raw_data_chunks()
         chunks = [self.create_command(x) for x in raw_data_chunks]
@@ -162,7 +161,7 @@ class SetSpeed(Command):
             raise ValueError(f"Speed must be between 0x00 and 0xFF, not {speed}")
         self.speed = speed
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [bytearray.fromhex(f"07 {self.speed:02X}")]
 
 
@@ -179,7 +178,7 @@ class SetBrightness(Command):
             )
         self.brightness = brightness
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [bytearray.fromhex(f"08 {self.brightness:02X}")]
 
 
@@ -191,7 +190,7 @@ class TurnOnOffApp(Command):
     def __init__(self, on: bool) -> None:
         self.on = on
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         onoff = 0x01 if self.on else 0x00
         return [bytearray.fromhex(f"09 {onoff:02X}")]
 
@@ -204,7 +203,7 @@ class TurnOnOffButton(Command):
     def __init__(self, on: bool) -> None:
         self.on = on
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         onoff = 0x01 if self.on else 0x00
         command = 0x13 if self.on else 0x05
         return [bytearray.fromhex(f"{command:02X} {onoff:02X}")]
@@ -218,7 +217,7 @@ class SetMode(Command):
     def __init__(self, mode: Mode) -> None:
         self.mode = mode
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [bytearray.fromhex(f"06 {self.mode:02X}")]
 
 
@@ -236,7 +235,7 @@ class SetMusicBars(Command):
         self.heights = heights
         self.colors = colors
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [bytearray.fromhex(f"01 {self.heights.hex()} {self.colors.hex()}")]
 
 
@@ -246,7 +245,7 @@ class SetText(Command):
     text: str
     default_color: str
     background_color: str
-    color_markers: Union[Tuple[Optional[str], Optional[str]], str] = (None, None)
+    color_markers: tuple[str | None, str | None] | str = (None, None)
     font: str
     font_height: int
     render_as_text: bool = True
@@ -260,7 +259,7 @@ class SetText(Command):
         text: str,
         default_color: str = DEFAULT_COLOR,
         background_color: str = DEFAULT_BACKGROUND_COLOR,
-        color_markers: Union[Tuple[Optional[str], Optional[str]], str] = (
+        color_markers: tuple[str | None, str | None] | str = (
             DEFAULT_START_COLOR_MARKER,
             DEFAULT_END_COLOR_MARKER,
         ),
@@ -284,7 +283,7 @@ class SetText(Command):
         self.vertical_alignment = vertical_alignment
         self.color_markers = color_markers
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         raw_text = create_text_payload(
             self.text,
             default_color=self.default_color,
@@ -333,7 +332,7 @@ class SetImage(Command):
         self.horizontal_alignment = horizontal_alignment
         self.vertical_alignment = vertical_alignment
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         raw_data = create_image_payload(
             self.filename,
             background_color=self.background_color,
@@ -380,7 +379,7 @@ class SetAnimation(Command):
         self.horizontal_alignment = horizontal_alignment
         self.vertical_alignment = vertical_alignment
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         raw_data = create_animation_payload(
             self.filename,
             background_color=self.background_color,
@@ -425,7 +424,7 @@ class SetJT(Command):
         self.horizontal_alignment = horizontal_alignment
         self.vertical_alignment = vertical_alignment
 
-    def get_command_raw_data_chunks(self) -> List[bytearray]:
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
         # raw_data = create_image_payload(
         raw_data, render_as_image = create_JT_payload(
             self.filename,

@@ -1,4 +1,5 @@
 """Client class for sending commands to the CoolLEDX device."""
+
 import asyncio
 import logging
 from typing import Optional
