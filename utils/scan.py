@@ -16,7 +16,10 @@ FORCE_EXTENDED_INFO = False
 DEFAULT_LOGGING = "WARNING"
 DEFAULT_TIMEOUT = 10.0  # seconds
 
-COOLLEDX_DEVICE_NAME = "CoolLEDX"
+COOLLEDX_DEVICE_NAMES = [
+    "CoolLEDX",
+    "CoolLEDM",
+]  # There is also some device with name "FS" that is picked up as a Glowaler device.
 
 LOGGER = logging.getLogger(__name__)
 
@@ -108,7 +111,7 @@ async def main():
 
     for d, a in devices.values():
         try:
-            is_coolledx = d.name == COOLLEDX_DEVICE_NAME
+            is_coolledx = d.name in COOLLEDX_DEVICE_NAMES
             if is_coolledx or args.all:
                 print()
                 print("-" * 80)

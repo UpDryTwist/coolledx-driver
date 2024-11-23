@@ -23,7 +23,7 @@ async def main():
 
     logging.basicConfig(level=args.log.upper())
 
-    async with Client(args.address) as client:
+    async with Client(args.address, args.device_name) as client:
         if args.text:
             await client.send_command(
                 SetText(

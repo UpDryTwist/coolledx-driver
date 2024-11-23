@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-from typing import Optional
 
 from bleak import (
     BleakClient,
@@ -14,12 +13,14 @@ from bleak.exc import BleakError
 
 from .commands import Command
 
-COOLLEDX_DEVICE_NAME = "CoolLEDX"
 # There is also some device with name "FS" that is picked up as a Glowaler device.
 # You can find it referenced here:
 # https://gitee.com/juntong-iOS/CROSBY_Combine/blob/master/CROSBY_Combine/Classess/Tools/BluetoothManager.
 # I don't have one of these, so I don't know what it is; don't know how extensible
 # this code would be to manage it.
+# 2024-11-23:  Added CoolLEDM to the list of supported names, per fr-og.  I don't have
+#              one, so this is more to make it easier for someone else to use this,
+#              but can't prove it works . . .
 
 SERVICE_1801_CHAR = "00002a05-0000-1000-8000-00805f9b34fb"
 SERVICE_FFF0_CHAR = "0000fff1-0000-1000-8000-00805f9b34fb"
@@ -30,6 +31,7 @@ DEFAULT_CONNECTION_RETRIES = (
     5  # Number of times to retry a connection before giving up.  4 seemed to work.
 )
 CONNECTION_RETRY_DELAY = 1.0  # Seconds to wait between connection retries
+DEFAULT_DEVICE_NAME = "CoolLEDX"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,9 +39,9 @@ LOGGER = logging.getLogger(__name__)
 class Client:
     """Client class for sending commands to the CoolLEDX device."""
 
-    device_address: Optional[str] = None
-    bleak_client: Optional[BleakClient] = None
-    ble_device: Optional[BLEDevice] = None
+    device_address: str | None = None
+    bleak_client: BleakClient | None = None
+    ble_device: BLEDevice | None = None
     characteristic_uuid: str
     connection_timeout: float
     command_timeout: float
@@ -49,7 +51,8 @@ class Client:
 
     def __init__(
         self,
-        address: Optional[str] = None,
+        address: str | None = None,
+        device_name: str | None = DEFAULT_DEVICE_NAME,
         connection_timeout: float = DEFAULT_CONNECTION_TIMEOUT,
         command_timeout: float = DEFAULT_COMMAND_NOTIFY_TIMEOUT,
         connection_retries: int = DEFAULT_CONNECTION_RETRIES,
@@ -72,6 +75,7 @@ class Client:
         safety.  This DOES mean that it'll spin for a while if there's no sign around.
         """
         self.device_address = address
+        self.device_name = device_name
         self.connection_timeout = connection_timeout
         self.command_timeout = command_timeout
         self.connection_retries = connection_retries
@@ -99,7 +103,11 @@ class Client:
                 retries_remaining -= 1
                 if self.device_address is None:
                     ble_device = await BleakScanner.find_device_by_name(  # type: ignore
-                        name=COOLLEDX_DEVICE_NAME,
+                        name=(
+                            self.device_name
+                            if self.device_name
+                            else DEFAULT_DEVICE_NAME
+                        ),
                         timeout=self.connection_timeout,
                     )
                 else:
@@ -111,7 +119,7 @@ class Client:
 
                 if ble_device is None:
                     raise BleakError(
-                        "Unable to locate a CoolLEDX device when scanning."
+                        "Unable to locate a CoolLEDX/M device when scanning."
                     )
 
                 # In theory, we are supposed to now fetch

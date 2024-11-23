@@ -29,6 +29,7 @@ DEFAULT_BRIGHTNESS = None
 DEFAULT_ANIMATION = None
 DEFAULT_IMAGE = None
 DEFAULT_JT = None
+DEFAULT_DEVICE_NAME = "CoolLEDX"
 
 
 def auto_int(x):
@@ -43,6 +44,13 @@ def parse_standard_arguments() -> argparse.Namespace:
         "--address",
         help="MAC address of the sign",
         default=DEFAULT_ADDRESS,
+        nargs="?",
+    )
+    parser.add_argument(
+        "-d",
+        "--device-name",
+        help="Name of the device to connect to; defaults to CoolLEDX",
+        default=DEFAULT_DEVICE_NAME,
         nargs="?",
     )
     parser.add_argument(
