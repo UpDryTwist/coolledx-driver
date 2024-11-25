@@ -17,8 +17,9 @@ fi
 
 docker pull ${MY_REGISTRY}/coolledx:latest
 
+# shellcheck disable=SC2086
 docker run --privileged \
 	-v /var/run/dbus:/var/run/dbus \
-	"${HOST_FONTS}" \
+	${HOST_FONTS} \
 	${MY_REGISTRY}/coolledx:latest \
 	python3 /app/utils/tweak_sign.py "$@"

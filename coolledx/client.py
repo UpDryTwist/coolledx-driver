@@ -97,11 +97,13 @@ class Client:
         fails; not sure exactly what causes this, but seems fairly easy to recover
         this way.
         """
+        LOGGER.debug(f"Initiating a connection to the device: {self.device_address}")
         retries_remaining = self.connection_retries
         while retries_remaining > 0:
             try:
                 retries_remaining -= 1
                 if self.device_address is None:
+                    LOGGER.debug(f"Locating device by name {self.device_name}")
                     ble_device = await BleakScanner.find_device_by_name(  # type: ignore
                         name=(
                             self.device_name
@@ -111,6 +113,7 @@ class Client:
                         timeout=self.connection_timeout,
                     )
                 else:
+                    LOGGER.debug(f"Locating device by address {self.device_address}")
                     ble_device = await BleakScanner.find_device_by_address(
                         # type: ignore
                         device_identifier=self.device_address,
@@ -118,6 +121,7 @@ class Client:
                     )
 
                 if ble_device is None:
+                    LOGGER.debug("Unable to locate a CoolLEDX/M device when scanning.")
                     raise BleakError(
                         "Unable to locate a CoolLEDX/M device when scanning."
                     )
@@ -147,7 +151,9 @@ class Client:
                     disconnected_callback=self.handle_disconnect,
                     # services=[ SERVICE_FFF0_CHAR ]  >> filtering doesn't work!
                 )
+                LOGGER.debug(f"Connecting to device: {ble_device}")
                 await bleak_client.connect()
+                LOGGER.debug(f"Connected to device: {ble_device}")
                 # Wait to set these until we're sure it's a successful connection
                 self.ble_device = ble_device
                 self.bleak_client = bleak_client
@@ -156,13 +162,13 @@ class Client:
                 break
             except BleakError as e:
                 LOGGER.warning(
-                    f"Connection to CoolLEDX (address: {self.device_address} "
-                    "received exception: {e}"
+                    f"Connection to CoolLEDX (address: {self.device_address}) "
+                    f"received exception: {e}"
                 )
                 if retries_remaining <= 0:
                     LOGGER.error(
                         f"Connection failed after {self.connection_retries} "
-                        "attempts."
+                        f"attempts."
                     )
                     raise e
                 await asyncio.sleep(CONNECTION_RETRY_DELAY)
@@ -219,4 +225,5 @@ class Client:
 
     async def disconnect(self) -> None:
         if self.bleak_client is not None:
+            LOGGER.debug(f"Disconnecting from device: {self.bleak_client}")
             await self.bleak_client.stop_notify(self.characteristic_uuid)

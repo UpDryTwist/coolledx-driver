@@ -36,6 +36,8 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     fonts-noto \
     fonts-freefont-ttf \
+    bluetooth \
+    bluez \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
