@@ -1,0 +1,69 @@
+FROM python:3.11-buster AS builder
+
+WORKDIR /app
+
+RUN pip install poetry
+
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=true \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_CACHE_DIR='/tmp/poetry_cache'\
+    PATH="/app/.venv/bin:$PATH" \
+    USER=dockeruser \
+    USER_ID=1000 \
+    GROUP=dockergroup \
+    GROUP_ID=1000
+
+COPY --chown=${USER}:${GROUP} --chmod=0755 pyproject.toml poetry.lock README.md /app/
+
+RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
+
+FROM python:3.11-slim-buster AS runtime
+
+WORKDIR /app
+
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH" \
+    USER=dockeruser \
+    USER_ID=1000 \
+    GROUP=dockergroup \
+    GROUP_ID=1000
+
+RUN apt-get update && apt-get install -y gosu procps && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
+    useradd \
+        --uid "${USER_ID}" \
+        --gid "${GROUP}" \
+        --create-home \
+        --home /var/empty \
+        --shell /bin/nologin \
+        "${USER}" && \
+    mkdir -p /config /data /logs && \
+    chown -R "${USER}":"${GROUP}" /config /logs && \
+    chmod -R a+rwX /config /logs
+
+COPY --from=builder --chown=${USER}:${GROUP} --chmod=0755 ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+COPY --chown=${USER}:${GROUP} --chmod=0755 coolledx    /app/coolledx
+COPY --chown=${USER}:${GROUP} --chmod=0755 run_scripts /app/run_scripts
+COPY --chown=${USER}:${GROUP} --chmod=0755 utils       /app/utils
+# COPY --chown=${USER}:${GROUP} --chmod=a+rw default_config /config
+
+# USER "${USER}"
+
+# Set up the environment variables we're expecting
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
+    LOGFILE=/logs/coolledx.log
+
+# TODO:
+#    CONFIGFILE=/config/coolledx.yaml \
+
+VOLUME /config /logs
+
+# EXPOSE <port>
+ENTRYPOINT ["/app/run_scripts/start_coolledx.sh"]
+
+CMD []

@@ -2,6 +2,8 @@
 .PHONY: help setup install test unit check lint
 
 TEST_DIR = tests
+DOCKER_REPO = registry.supercroy.com/updrytwist
+DOCKER_PROJ = coolledx
 VERSION = $(shell poetry version | cut -d' ' -f2)
 
 # Before working on something, run make bump-version-<major|minor|patch>
@@ -16,6 +18,7 @@ help:
 	@echo "  check             to run pre-commit checks"
 	@echo "  commit-ready      to run pre-commit checks and unit tests"
 	@echo "  full-commit-ready to run pre-commit checks, unit tests, and bump version"
+	@echo "  max-build         to run a complete dependencies refresh, full build, and docker build/publish"
 
 setup:
 	@poetry init
@@ -70,6 +73,22 @@ publish-to-pypi:
 build:
 	@poetry build
 
+docker-build-one:
+	@docker build -t $(DOCKER_PROJ):$(VERSION) .
+
+# You need to set up buildx. Run `docker buildx create --name mybuilder` and `docker buildx use mybuilder`
+docker-build:
+	@docker buildx build --platform linux/amd64,linux/arm64 \
+		-t $(DOCKER_REPO)/$(DOCKER_PROJ):$(VERSION) \
+		-t $(DOCKER_REPO)/$(DOCKER_PROJ):latest \
+		--push .
+
+docker-publish-one: docker-build-one
+	@docker tag $(DOCKER_PROJ):$(VERSION) $(DOCKER_REPO)/$(DOCKER_PROJ):$(VERSION)
+	@docker push $(DOCKER_REPO)/$(DOCKER_PROJ):$(VERSION)
+	@docker tag $(DOCKER_PROJ):$(VERSION) $(DOCKER_REPO)/$(DOCKER_PROJ):latest
+	@docker push $(DOCKER_REPO)/$(DOCKER_PROJ):latest
+
 bump-version-major:
 	@bump-my-version bump major pyproject.toml .bumpversion.toml
 
@@ -90,3 +109,5 @@ version-build: bump-version-build build
 fast-build: just-unit version-build
 
 full-build: full-commit-ready version-build
+
+max-build: autoupdate full-build docker-build

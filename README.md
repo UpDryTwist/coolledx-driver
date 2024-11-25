@@ -26,6 +26,17 @@ for all its Bluetooth interactions, so you should be able to use any system supp
 by Bleak . . . but it hasn't been tested on anything other than Windows 11 (and soon
 Ubuntu on a Pi).
 
+### Using a container
+
+You can build a Docker container to run this. Build using "make docker-build".
+
+Running the container as of this moment will run tweak_sign.py (ultimately, I'll
+be modifying it to start a service, listening on a message queue). Pass the parameters
+to tweak_sign.py as you would if you were running it from the command line.
+
+You can use the utility scripts in the docker_scripts folder to run the container
+and call the utility functions appropriately.
+
 ## Roadmap
 
 * [ ] Write some bare-bones documentation, at least
@@ -77,67 +88,73 @@ some bad assumptions about what was or was not working.
 ## Panel Communication
 
 CoolLED1248<br>
-Versions 2.x of the Android app can import and export JT files.  If you have problems importing or with other functions, try version 2.1.4.
+Versions 2.x of the Android app can import and export JT files. If you have problems
+importing or with other functions, try version 2.1.4.
 
 ### PC Image / Animation Creation
+
 If you want to use your PC to create .jt files, check out the JT-Edit repository:
 https://github.com/auc0le/JT-Edit
 
 ### CoolLEDX Driver Installation
+
 To install the CoolLEDX driver on your system:<br>
-1.  clone the repository to your PC.<br>
 
-        git clone https://github.com/UpDryTwist/coolledx-driver.git
+1. clone the repository to your PC.<br>
 
-2.  From the coolledx-driver folder, copy the coolledx folder to your python library
+       git clone https://github.com/UpDryTwist/coolledx-driver.git
 
-        cd /yourpath/coolledx-driver/
-        cp -a coolledx /home/<yourusername>/.local/lib/python3.8/site-packages/.
+2. From the coolledx-driver folder, copy the coolledx folder to your python library
 
-3.  Install bleak
+       cd /yourpath/coolledx-driver/
+       cp -a coolledx /home/<yourusername>/.local/lib/python3.8/site-packages/.
 
-        pip install bleak
+3. Install bleak
 
-4.  If you get this error when trying to run commands from the coolledx driver,
+       pip install bleak
 
-        ImportError: cannot import name 'StrEnum' from 'enum' (/usr/lib/python3.8/enum.py)
+4. If you get this error when trying to run commands from the coolledx driver,
 
-    install StrEnum and edit the coolledx/__init__.py file so StrEnum is imported from strenum instead of enum
+       ImportError: cannot import name 'StrEnum' from 'enum' (/usr/lib/python3.8/enum.py)
 
-        python3 -m pip install StrEnum
+   install StrEnum and edit the coolledx/__init__.py file so StrEnum is imported from
+   strenum instead of enum
 
-    <pre>
-    #---then edit the first few lines of coolledx/__init__.py file----
-    #from enum import IntEnum, StrEnum
-    from enum import IntEnum
-    from strenum import StrEnum
-    #-----------------------------------------------------------------
-    </pre>
+       python3 -m pip install StrEnum
+
+   <pre>
+   #---then edit the first few lines of coolledx/__init__.py file----
+   #from enum import IntEnum, StrEnum
+   from enum import IntEnum
+   from strenum import StrEnum
+   #-----------------------------------------------------------------
+   </pre>
 
 <b>To send commands to the panel:</b>
-1.  Change to the coolledx-driver directory and use scan.py to find your MAC address.
 
-        python3 utils/scan.py
-    <pre>
-    --response---
-    Scanning for 10.0 seconds (change duration with -t) . . .
-    --------------------------------------------------------------------------------
-    Device: CoolLEDX (XX:XX:XX:XX:XX:XX), RSSI: -61
-    Height: 16, Width: 32
-    </pre>
+1. Change to the coolledx-driver directory and use scan.py to find your MAC address.
 
-2.  Use utils/tweak_sign.py to send commands to the panel.
+       python3 utils/scan.py
+   <pre>
+   --response---
+   Scanning for 10.0 seconds (change duration with -t) . . .
+   --------------------------------------------------------------------------------
+   Device: CoolLEDX (XX:XX:XX:XX:XX:XX), RSSI: -61
+   Height: 16, Width: 32
+   </pre>
 
-        python3 utils/tweak_sign.py x
-    <pre>
-    --response---
-    usage: tweak_sign.py [-h] [-a [ADDRESS]] [-t TEXT] [-s SPEED] [-b BRIGHTNESS] [-c COLOR]
-                     [-C BACKGROUND_COLOR] [-j START_COLOR_MARKER] [-k END_COLOR_MARKER] [-f FONT]
-                     [-H FONT_HEIGHT] [-l LOG] [-o ONOFF] [-m MODE] [-i IMAGE] [-n ANIMATION]
-                     [-N ANIMATION_SPEED] [-w WIDTH_TREATMENT] [-g HEIGHT_TREATMENT]
-                     [-z HORIZONTAL_ALIGNMENT] [-y VERTICAL_ALIGNMENT] [-jt JTFILE]
-    tweak_sign.py: error: unrecognized arguments: xxx
-    </pre>
+2. Use utils/tweak_sign.py to send commands to the panel.
+
+       python3 utils/tweak_sign.py x
+   <pre>
+   --response---
+   usage: tweak_sign.py [-h] [-a [ADDRESS]] [-t TEXT] [-s SPEED] [-b BRIGHTNESS] [-c COLOR]
+                    [-C BACKGROUND_COLOR] [-j START_COLOR_MARKER] [-k END_COLOR_MARKER] [-f FONT]
+                    [-H FONT_HEIGHT] [-l LOG] [-o ONOFF] [-m MODE] [-i IMAGE] [-n ANIMATION]
+                    [-N ANIMATION_SPEED] [-w WIDTH_TREATMENT] [-g HEIGHT_TREATMENT]
+                    [-z HORIZONTAL_ALIGNMENT] [-y VERTICAL_ALIGNMENT] [-jt JTFILE]
+   tweak_sign.py: error: unrecognized arguments: xxx
+   </pre>
 
 <b>To send an image to the panel:</b>
 
