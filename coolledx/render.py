@@ -1,6 +1,7 @@
 """Rendering functions for the CoolLEDx sign."""
 
 import json
+import logging
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
@@ -17,6 +18,8 @@ from coolledx import (
     VerticalAlignment,
     WidthTreatment,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def render_text_to_image(
@@ -80,7 +83,13 @@ def render_text_to_image(
     )
     draw = ImageDraw.Draw(img)
 
-    truetype_font = ImageFont.truetype(font, font_height)
+    try:
+        truetype_font = ImageFont.truetype(font, font_height)
+    except Exception as e:
+        LOGGER.warning(
+            f"Could not load font {font} (falling back to default font): {e}"
+        )
+        truetype_font = ImageFont.load_default(font_height)
 
     # The parts are coming in (color, text).  Due to the way we've split the string,
     # any color changes should be applied AFTER we render the text.

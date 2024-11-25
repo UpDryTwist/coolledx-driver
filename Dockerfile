@@ -29,7 +29,14 @@ ENV VIRTUAL_ENV=/app/.venv \
     GROUP=dockergroup \
     GROUP_ID=1000
 
-RUN apt-get update && apt-get install -y gosu procps && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    gosu procps \
+    fontconfig \
+    fonts-dejavu-core \
+    fonts-liberation \
+    fonts-noto \
+    fonts-freefont-ttf \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
     useradd \

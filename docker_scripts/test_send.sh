@@ -9,7 +9,7 @@ Linux)
 	FONT="DejaVuSans"
 	;;
 Darwin)
-	FONT="Arial"
+	FONT="arial"
 	;;
 CYGWIN* | MINGW32* | MSYS*)
 	FONT="calibri"
