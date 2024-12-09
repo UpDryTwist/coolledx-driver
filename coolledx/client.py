@@ -11,7 +11,9 @@ from bleak.backends.characteristic import BleakGATTCharacteristic
 from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
 
-from .commands import Command
+from .commands import Command, CommandStatus, CoolLedError, ErrorCode
+from .decoder import CoolCommand
+from .hardware import CoolLED
 
 # There is also some device with name "FS" that is picked up as a Glowaler device.
 # You can find it referenced here:
@@ -48,6 +50,8 @@ class Client:
     connection_retries: int
     height: int
     width: int
+    current_command: Command | None = None
+    hardware: CoolLED = CoolLED()
 
     def __init__(
         self,
@@ -191,6 +195,17 @@ class Client:
             )
         else:
             LOGGER.debug(f"Received notification: from {sender} data: {data.hex()}")
+            cmd = CoolCommand(False, "Sign", "Us", sender.handle, data)
+            LOGGER.debug(f"Received notification (decoded): {cmd}")
+            if self.current_command:
+                # TODO:  This isn't entirely accurate.  I just don't know how to
+                #        properly interpret the errors from the devices yet.
+                self.current_command.set_command_status(CommandStatus.ACKNOWLEDGED)
+                self.current_command.error_code = ErrorCode.SUCCESS
+                if self.current_command.future:
+                    self.current_command.future.set_result(0)
+            else:
+                LOGGER.error("Received a notification without a current command.")
 
     @staticmethod
     def handle_disconnect(client: BleakClient) -> None:
@@ -208,10 +223,38 @@ class Client:
         """Send a command to the device; wait for response if needed."""
         await self.force_connected()
         command.set_dimensions(height=self.height, width=self.width)
+        command.set_hardware(self.hardware)
         chunks = command.get_command_chunks()
-        for chunk in chunks:
-            LOGGER.debug(f"Sending chunk: {chunk.hex()}")
-            await self.write_raw(chunk, command.expect_notify())
+        try:
+            for chunk in chunks:
+                LOGGER.debug(f"Sending chunk: {chunk.hex()}")
+                cmd = CoolCommand(True, "Us", "Sign", 0x00, chunk)
+                LOGGER.debug(f"Sending command: {cmd}")
+                self.current_command = command
+                command.command_status = CommandStatus.TRANSMITTED
+                command.set_future(asyncio.get_event_loop().create_future())
+                await self.write_raw(chunk, command.expect_notify())
+                if command.expect_notify() and command.future:
+                    await asyncio.wait_for(command.future, timeout=self.command_timeout)
+                    if command.set_command_status(CommandStatus.TRANSMITTED):
+                        LOGGER.error(
+                            f"Command {command} did not receive a notification "
+                            f"within {self.command_timeout} seconds."
+                        )
+                        break
+                    elif command.command_status == CommandStatus.ERROR:
+                        LOGGER.error(
+                            f"Command {command} received an error response: "
+                            f"{ErrorCode.get_error_code_name(command.error_code)}({command.error_code})"
+                        )
+                        raise CoolLedError(
+                            f"Command {command} received an error response: {ErrorCode.get_error_code_name(command.error_code)}({command.error_code})"
+                        )
+
+        except Exception as e:
+            LOGGER.error(f"Error sending command: {command} {e}")
+            self.current_command = None
+            raise e
 
     async def write_raw(self, data: bytearray, expect_response: bool = False) -> None:
         if self.bleak_client is None:

@@ -12,6 +12,7 @@ from coolledx import (
     DEFAULT_END_COLOR_MARKER,
     DEFAULT_FONT,
     DEFAULT_FONT_SIZE,
+    DEFAULT_FUNKY,
     DEFAULT_HEIGHT_TREATMENT,
     DEFAULT_HORIZONTAL_ALIGNMENT,
     DEFAULT_LOGGING,
@@ -24,8 +25,8 @@ from coolledx import (
 
 DEFAULT_ADDRESS = None
 DEFAULT_TEXT_TO_SEND = None
-DEFAULT_SPEED = None
-DEFAULT_BRIGHTNESS = None
+DEFAULT_SPEED = -1
+DEFAULT_BRIGHTNESS = -1
 DEFAULT_ANIMATION = None
 DEFAULT_IMAGE = None
 DEFAULT_JT = None
@@ -108,14 +109,14 @@ def parse_standard_arguments() -> argparse.Namespace:
         "--onoff",
         type=int,
         default=DEFAULT_ON_OFF,
-        help="Turn on/off the scroller",
+        help="Turn on/off the scroller: 1=on, 0=off, -1=don't touch",
     )
     parser.add_argument(
         "-m",
         "--mode",
         type=int,
         default=DEFAULT_MODE,
-        help="Mode of the scroller (1-8)",
+        help="Mode of the scroller (1-8), or -1 to not touch",
     )
     parser.add_argument(
         "-i", "--image", default=DEFAULT_IMAGE, help="Image file to display"
@@ -160,5 +161,20 @@ def parse_standard_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "-jt", "--jtfile", default=DEFAULT_JT, help="JT file to display"
+    )
+    parser.add_argument(
+        "-u",
+        "--funky",
+        type=str,
+        default=DEFAULT_FUNKY,
+        help="Send one of the funky commands: 'initialize', 'invert', 'revert', 'startup', 'powerdown', 'animation', 'invertorsomething'",
+    )
+
+    parser.add_argument(
+        "-r",
+        "--raw",
+        type=str,
+        default=None,
+        help="Send a raw command to the sign.  Provide as a hex string, e.g. '01 02 03'",
     )
     return parser.parse_args()

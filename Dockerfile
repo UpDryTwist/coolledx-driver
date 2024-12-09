@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y \
     fonts-freefont-ttf \
     bluetooth \
     bluez \
+    tshark \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \

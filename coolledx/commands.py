@@ -2,6 +2,8 @@
 
 import abc
 import re
+from asyncio import Future
+from enum import Enum
 
 from coolledx import (
     DEFAULT_ANIMATION_SPEED,
@@ -18,6 +20,7 @@ from coolledx import (
     WidthTreatment,
 )
 
+from .hardware import CoolLED
 from .render import (
     create_animation_payload,
     create_image_payload,
@@ -29,12 +32,58 @@ DEFAULT_DEVICE_WIDTH = 96
 DEFAULT_DEVICE_HEIGHT = 16
 
 
+class CoolLedError(Exception):
+    """Base class for exceptions in this module."""
+
+    pass
+
+
+class ErrorCode(Enum):
+    """
+    Error codes returned by the device.
+    """
+
+    UNKNOWN = -1
+    SUCCESS = 0x00
+    TRANSMISSION_FAILED = 0x01
+    DEVICE_ABNORMALITY = 0x02
+    DATA_ERROR = 0x03
+    DATA_LENGTH_ERROR = 0x04
+    DATA_ID_ERROR = 0x05
+    DATA_CHECKSUM_ERROR = 0x06
+
+    @staticmethod
+    def get_error_code_name(error_code: "int | ErrorCode") -> str:
+        """
+        Return a human-readable error message for the given error code.
+        """
+        try:
+            return ErrorCode(error_code).name
+        except ValueError:
+            return f"Unknown error code: {error_code:02X}"
+
+
+class CommandStatus(Enum):
+    """
+    Status of the currently executing command
+    """
+
+    NOT_STARTED = 0
+    TRANSMITTED = 1
+    ACKNOWLEDGED = 2
+    ERROR = 3
+
+
 class Command(abc.ABC):
     """Abstract base class for commands."""
 
     sign_height: int
     sign_width: int
     dimensions_set: bool = False
+    command_status: CommandStatus = CommandStatus.NOT_STARTED
+    error_code: ErrorCode = ErrorCode.UNKNOWN
+    future: Future | None = None
+    hardware: CoolLED = CoolLED()
 
     @abc.abstractmethod
     def get_command_raw_data_chunks(self) -> list[bytearray]:
@@ -64,6 +113,18 @@ class Command(abc.ABC):
         self.sign_height = height
         self.dimensions_set = True
 
+    def set_hardware(self, hardware: CoolLED) -> None:
+        """Set the hardware type."""
+        self.hardware = hardware
+
+    def set_future(self, future: Future) -> None:
+        """Set the future for this command."""
+        self.future = future
+
+    def set_command_status(self, status: CommandStatus) -> None:
+        """Set the status of the command."""
+        self.command_status = status
+
     @property
     def get_device_width(self) -> int:
         return self.sign_width if self.dimensions_set else DEFAULT_DEVICE_WIDTH
@@ -77,6 +138,13 @@ class Command(abc.ABC):
         """
         Should we expect a notification from the device?
         This only applies to commands that send data.
+        """
+        return True
+
+    @staticmethod
+    def is_raw_command() -> bool:
+        """
+        Is this a raw command, meaning that we shouldn't encode/escape the data?
         """
         return False
 
@@ -139,8 +207,11 @@ class Command(abc.ABC):
     def get_command_chunks(self) -> list[bytearray]:
         """Get the command as a bytearray."""
         raw_data_chunks = self.get_command_raw_data_chunks()
-        chunks = [self.create_command(x) for x in raw_data_chunks]
-        return chunks
+        if self.is_raw_command():
+            return raw_data_chunks
+        else:
+            chunks = [self.create_command(x) for x in raw_data_chunks]
+            return chunks
 
     def get_command_hexstr(self, append_newline: bool = True) -> str:
         """Get the command as a hex string."""
@@ -148,6 +219,42 @@ class Command(abc.ABC):
         for chunk in self.get_command_chunks():
             hex_string += chunk.hex() + ("\n" if append_newline else "")
         return hex_string
+
+    def truncated_command(self) -> str:
+        """
+        Return a string representation of the command that has been truncated to
+        32 characters.
+        """
+        hexstr = self.get_command_hexstr(append_newline=False)
+        if len(hexstr) > 32:
+            hexstr = hexstr[:32] + "..."
+        return hexstr
+
+    def __str__(self):
+        return f"{self.__class__.__name__}[{self.truncated_command()}]"
+
+
+class SendRawData(Command):
+    """Send raw data to the scroller"""
+
+    data: bytearray
+
+    def __init__(self, data_as_hex: str) -> None:
+        self.data = bytearray.fromhex(data_as_hex)
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [self.data]
+
+    @staticmethod
+    def is_raw_command() -> bool:
+        return True
+
+
+class Initialize(Command):
+    """Initialize the scroller"""
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [bytearray.fromhex(f"{self.hardware.cmdbyte_initialize():02x} 01")]
 
 
 class SetSpeed(Command):
@@ -162,7 +269,9 @@ class SetSpeed(Command):
         self.speed = speed
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
-        return [bytearray.fromhex(f"07 {self.speed:02X}")]
+        return [
+            bytearray.fromhex(f"{self.hardware.cmdbyte_speed():02x} {self.speed:02X}")
+        ]
 
 
 class SetBrightness(Command):
@@ -179,7 +288,11 @@ class SetBrightness(Command):
         self.brightness = brightness
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
-        return [bytearray.fromhex(f"08 {self.brightness:02X}")]
+        return [
+            bytearray.fromhex(
+                f"{self.hardware.cmdbyte_brightness():02x} {self.brightness:02X}"
+            )
+        ]
 
 
 class TurnOnOffApp(Command):
@@ -192,7 +305,7 @@ class TurnOnOffApp(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         onoff = 0x01 if self.on else 0x00
-        return [bytearray.fromhex(f"09 {onoff:02X}")]
+        return [bytearray.fromhex(f"{self.hardware.cmdbyte_switch():02x} {onoff:02X}")]
 
 
 class TurnOnOffButton(Command):
@@ -205,8 +318,78 @@ class TurnOnOffButton(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         onoff = 0x01 if self.on else 0x00
-        command = 0x13 if self.on else 0x05
+        command = (
+            self.hardware.cmdbyte_buttonon()
+            if self.on
+            else self.hardware.cmdbyte_buttonoff()
+        )
         return [bytearray.fromhex(f"{command:02X} {onoff:02X}")]
+
+
+class ShowChargingAnimation(Command):
+    """Show the charging animation"""
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [
+            bytearray(self.hardware.cmdbyte_showicon().to_bytes(1, byteorder="big"))
+        ]
+
+
+class InvertDisplay(Command):
+    """Invert the display"""
+
+    inverted: bool = False
+
+    def __init__(self, inverted: bool = False) -> None:
+        self.inverted = inverted
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [
+            bytearray.fromhex(
+                f"{self.hardware.cmdbyte_invertdisplay():02x} {self.inverted:02X}"
+            )
+        ]
+
+
+class InvertOrSomething(Command):
+    """Mirror the display"""
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [
+            bytearray(
+                self.hardware.cmdbyte_invertorsomething().to_bytes(1, byteorder="big")
+            )
+        ]
+
+
+class StartupWithBatteryLevel(Command):
+    """Startup with battery level"""
+
+    battery_level: int
+
+    def __init__(self, battery_level: int) -> None:
+        """Legitimate battery levels are 0x00 to 0xFF."""
+        if battery_level < 0x00 or battery_level > 0xFF:
+            raise ValueError(
+                f"Battery level must be between 0x00 and 0xFF, not {battery_level}"
+            )
+        self.battery_level = battery_level
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [
+            bytearray.fromhex(
+                f"{self.hardware.cmdbyte_initialize():02x} {self.battery_level:02X}"
+            )
+        ]
+
+
+class PowerDown(Command):
+    """Power down the device"""
+
+    def get_command_raw_data_chunks(self) -> list[bytearray]:
+        return [
+            bytearray(self.hardware.cmdbyte_powerdown().to_bytes(1, byteorder="big"))
+        ]
 
 
 class SetMode(Command):
@@ -218,7 +401,9 @@ class SetMode(Command):
         self.mode = mode
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
-        return [bytearray.fromhex(f"06 {self.mode:02X}")]
+        return [
+            bytearray.fromhex(f"{self.hardware.cmdbyte_mode():02x} {self.mode:02X}")
+        ]
 
 
 class SetMusicBars(Command):
@@ -236,7 +421,13 @@ class SetMusicBars(Command):
         self.colors = colors
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
-        return [bytearray.fromhex(f"01 {self.heights.hex()} {self.colors.hex()}")]
+        # At least with the CoolLEDM, this is 8 bytes total being sent.  I'm suspecting
+        # that heights and colors are integrated into a half byte each.
+        return [
+            bytearray.fromhex(
+                f"{self.hardware.cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}"
+            )
+        ]
 
 
 class SetText(Command):
@@ -299,7 +490,12 @@ class SetText(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_text, 2 if self.render_as_text else 3)
+        return self.chop_up_data(
+            raw_text,
+            self.hardware.cmdbyte_text()
+            if self.render_as_text
+            else self.hardware.cmdbyte_image(),
+        )
 
     @staticmethod
     def expect_notify() -> bool:
@@ -343,7 +539,7 @@ class SetImage(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_data, 3)
+        return self.chop_up_data(raw_data, self.hardware.cmdbyte_image())
 
     @staticmethod
     def expect_notify() -> bool:
@@ -391,7 +587,7 @@ class SetAnimation(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_data, 4)
+        return self.chop_up_data(raw_data, self.hardware.cmdbyte_animation())
 
     @staticmethod
     def expect_notify() -> bool:
@@ -436,7 +632,12 @@ class SetJT(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_data, 3 if render_as_image else 4)
+        return self.chop_up_data(
+            raw_data,
+            self.hardware.cmdbyte_image()
+            if render_as_image
+            else self.hardware.cmdbyte_animation(),
+        )
 
     @staticmethod
     def expect_notify() -> bool:

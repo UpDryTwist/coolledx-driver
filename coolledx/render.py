@@ -295,17 +295,20 @@ def create_image_output(
     pixel_payload += bytearray(24)
 
     if text is not None:
-        # length of string (pretty irrelevant because the image will be used anyway)
-        pixel_payload += len(text).to_bytes(
-            2, byteorder="big"
-        )  # changed to 2 to allow length>255
+        buffer_length = 80
+        if len(text) > 255:
+            LOGGER.warning(
+                f"Text message length exceeds 255 characters; may not work on all signs.  {text}"
+            )
+            pixel_payload += len(text).to_bytes(2, byteorder="big")
+            buffer_length = 79
+        else:
+            pixel_payload += len(text).to_bytes(1, byteorder="big")
 
         # character string (pretty irrelevant because the image will be used anyway)
-        char_metadata = bytearray(
-            79
-        )  # changed from 80 to allow for 2-byte text message length
+        char_metadata = bytearray(buffer_length)
         for i, _ in enumerate(text):
-            if i < 79:  # changed from 80 to allow for 2-byte text message length
+            if i < buffer_length:
                 char_metadata[i] = 0x30
         pixel_payload += char_metadata
 
