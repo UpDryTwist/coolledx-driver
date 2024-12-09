@@ -68,7 +68,7 @@ sphinx = "^7.2.6"
 sphinx-rtd-theme = "^2.0.0"
 pyright = "^1.1.390"
 pytest-cov = "^5.0.0"
-bump-my-version = "^0.26.0"
+bump-my-version = ">=0.26,<0.29"
 
 [build-system]
 requires = ["poetry-core"]
