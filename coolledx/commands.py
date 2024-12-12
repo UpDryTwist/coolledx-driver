@@ -334,6 +334,14 @@ class ShowChargingAnimation(Command):
             bytearray(self.hardware.cmdbyte_showicon().to_bytes(1, byteorder="big"))
         ]
 
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
+
 
 class InvertDisplay(Command):
     """Invert the display"""
@@ -350,6 +358,14 @@ class InvertDisplay(Command):
             )
         ]
 
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
+
 
 class InvertOrSomething(Command):
     """Mirror the display"""
@@ -360,6 +376,14 @@ class InvertOrSomething(Command):
                 self.hardware.cmdbyte_invertorsomething().to_bytes(1, byteorder="big")
             )
         ]
+
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
 
 
 class StartupWithBatteryLevel(Command):
@@ -391,6 +415,14 @@ class PowerDown(Command):
             bytearray(self.hardware.cmdbyte_powerdown().to_bytes(1, byteorder="big"))
         ]
 
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
+
 
 class SetMode(Command):
     """Set the text movement style for the scroller"""
@@ -404,6 +436,14 @@ class SetMode(Command):
         return [
             bytearray.fromhex(f"{self.hardware.cmdbyte_mode():02x} {self.mode:02X}")
         ]
+
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
 
 
 class SetMusicBars(Command):
@@ -428,6 +468,14 @@ class SetMusicBars(Command):
                 f"{self.hardware.cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}"
             )
         ]
+
+    @staticmethod
+    def expect_notify() -> bool:
+        """
+        Should we expect a notification from the device?
+        This only applies to commands that send data.
+        """
+        return False
 
 
 class SetText(Command):
