@@ -193,13 +193,13 @@ virtualenv = ["virtualenv (>=20.0.35)"]
 
 [[package]]
 name = "bump-my-version"
-version = "0.28.1"
+version = "0.30.0"
 description = "Version bump your Python project"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "bump_my_version-0.28.1-py3-none-any.whl", hash = "sha256:df7fdb02a1b43c122a6714df6d1fe4efc7a1220b5638ca5a0eb3018813c1b222"},
-    {file = "bump_my_version-0.28.1.tar.gz", hash = "sha256:e608def5191baf505b6cde88bd679a0a95fc4cfeace4247adb60ac0f8a7e57ee"},
+    {file = "bump_my_version-0.30.0-py3-none-any.whl", hash = "sha256:b0d683a1cb97fbc2f46adf8eb39ff1f0bdd72866c3583fe01f9837d6f031e5e3"},
+    {file = "bump_my_version-0.30.0.tar.gz", hash = "sha256:d53e784c73abc4bb5759e296f510bc71878e1df078eb525542ec9291b5ceb195"},
 ]
 
 [package.dependencies]
@@ -211,11 +211,6 @@ rich = "*"
 rich-click = "*"
 tomlkit = "*"
 wcmatch = ">=8.5.1"
-
-[package.extras]
-dev = ["generate-changelog (>=0.7.6)", "git-fame (>=1.12.2)", "pip-tools", "pre-commit"]
-docs = ["black", "markdown-customblocks", "mdx-truly-sane-lists", "mkdocs", "mkdocs-click", "mkdocs-drawio", "mkdocs-gen-files", "mkdocs-git-authors-plugin", "mkdocs-git-committers-plugin", "mkdocs-git-revision-date-localized-plugin (>=1.2.6)", "mkdocs-include-markdown-plugin", "mkdocs-literate-nav", "mkdocs-material", "mkdocstrings[python]", "python-frontmatter"]
-test = ["coverage", "freezegun", "pre-commit", "pytest", "pytest-cov", "pytest-mock", "pytest-sugar"]
 
 [[package]]
 name = "cachecontrol"
@@ -2976,4 +2971,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.14"
-content-hash = "d0fb9a430fa8ced012d4c5333831c0bab2da32dc709a04e65b9e9fc0aecdf007"
+content-hash = "654296d6b538669219dc68888778c14975f1382d5e2856ccd1ff332e2b681482"
