@@ -27,7 +27,8 @@ from coolledx.commands import (
 )
 
 
-async def main():
+async def main() -> None:
+    """Send commands to the CoolLEDX sign."""
     args = parse_standard_arguments()
 
     logging.basicConfig(level=args.log.upper())
@@ -37,9 +38,9 @@ async def main():
             await client.send_command(SendRawData(args.raw))
         if args.funky:
             if args.funky == "invert":
-                await client.send_command(InvertDisplay(True))
+                await client.send_command(InvertDisplay(inverted=True))
             elif args.funky == "revert":
-                await client.send_command(InvertDisplay(False))
+                await client.send_command(InvertDisplay(inverted=False))
             elif args.funky == "charging":
                 await client.send_command(ShowChargingAnimation())
             elif args.funky == "startup":
@@ -66,7 +67,7 @@ async def main():
                     height_treatment=args.height_treatment,
                     horizontal_alignment=args.horizontal_alignment,
                     vertical_alignment=args.vertical_alignment,
-                )
+                ),
             )
         if args.image:
             await client.send_command(
@@ -77,7 +78,7 @@ async def main():
                     height_treatment=args.height_treatment,
                     horizontal_alignment=args.horizontal_alignment,
                     vertical_alignment=args.vertical_alignment,
-                )
+                ),
             )
         if args.animation:
             await client.send_command(
@@ -89,7 +90,7 @@ async def main():
                     height_treatment=args.height_treatment,
                     horizontal_alignment=args.horizontal_alignment,
                     vertical_alignment=args.vertical_alignment,
-                )
+                ),
             )
         if args.jtfile:
             await client.send_command(
@@ -100,7 +101,7 @@ async def main():
                     height_treatment=args.height_treatment,
                     horizontal_alignment=args.horizontal_alignment,
                     vertical_alignment=args.vertical_alignment,
-                )
+                ),
             )
         if args.speed >= 0:
             await client.send_command(SetSpeed(args.speed))

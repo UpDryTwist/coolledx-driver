@@ -1,0 +1,6 @@
+---
+description:  Implement CI/CD pipelines using GitHub Actions for automated build, test and deployment
+globs: /.github/workflows/**/*.*
+alwaysApply: false
+---
+- Implement CI/CD using GitHub Actions

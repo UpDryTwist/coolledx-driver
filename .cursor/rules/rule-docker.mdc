@@ -1,0 +1,31 @@
+---
+description:  Write efficient and secure Dockerfiles
+globs: ["Dockerfile", "*.Dockerfile"]
+alwaysApply: false
+---
+
+## Base Image
+- Use official, minimal base images (e.g., 'python:3.13-slim')
+- Specify exact versions or digests for reproducibility when possible (e.g., 'python:3.13.5-slim-bullseye')
+- Prefer Alpine imapges for size, but be aware of potential 'musl libc' compatibility issues vs 'glibc'
+
+## Minimize layers and build context
+- Chain related commands using '&&' to reduce layers (e.g., 'apt-get update && apt-get install -y --no-install-recommends package && rm -rf /var/lib/apt/lists/*`).
+- - Use a `.dockerignore` file to exclude unnecessary files/directories (e.g., `.git`, `node_modules`, `.venv`, logs, local config) from the build context.
+
+## Build Efficiency
+- Order instructions from least to most frequently changing (e.g., install dependencies before copying application code)
+- Leverage Docker build cache effectively
+- Use multi-stage builds to keep the final image small, separating build dependencies from runtime dependencies
+
+## Security
+- Run containers as a non-root user. Create a dedicated user/group (`RUN groupadd -r appuser && useradd -r -g appuser appuser`) and switch to it (`USER appuser`).
+- Avoid storing secrets directly in the Dockerfile. Use build arguments (`ARG`), environment variables (`ENV`), or secrets management tools at runtime.
+- Scan images for vulnerabilities using tools like Trivy or Docker Scout.
+- Minimize the attack surface: install only necessary packages (`--no-install-recommends`).
+
+## Instructions
+- Use `COPY` instead of `ADD` unless you specifically need `ADD`'s features (like auto-extraction or URL fetching).
+- Prefer `ENTRYPOINT` for the main container command and use `CMD` for default arguments that can be overridden. Use the JSON array form (e.g., `ENTRYPOINT ["python", "app.py"]`).
+- Use `WORKDIR` to set the working directory for subsequent instructions (`RUN`, `CMD`, `ENTRYPOINT`, `COPY`, `ADD`).
+- Expose necessary ports using `EXPOSE`.

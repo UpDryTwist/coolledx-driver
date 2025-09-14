@@ -3,6 +3,7 @@
 import argparse
 import asyncio
 import logging
+from typing import Any
 
 from bleak import BleakClient, BleakScanner
 from bleak.backends.device import BLEDevice
@@ -24,28 +25,74 @@ COOLLEDX_DEVICE_NAMES = [
 LOGGER = logging.getLogger(__name__)
 
 
-async def detection_callback(
-    device: BLEDevice, advertisement_data: AdvertisementData
+async def _print_descriptor_info(client: BleakClient, descriptor: Any) -> None:
+    """Print information about a descriptor."""
+    try:
+        value = await client.read_gatt_descriptor(descriptor.handle)
+        print(f"    [Descriptor] {descriptor}, Value: {value}")
+    except BleakError as e:
+        print(f"    [Descriptor] {descriptor}, Error: {e}")
+
+
+async def _process_device(
+    device: BLEDevice,
+    advertisement: AdvertisementData,
+    args: Any,
 ) -> None:
-    """Callback for when a device is detected"""
-    LOGGER.debug(f"Device detected: {device} {advertisement_data}")
+    """Process a single device."""
+    is_coolledx = device.name in COOLLEDX_DEVICE_NAMES
+    if is_coolledx or args.all:
+        print()
+        print("-" * 80)
+        print(f"Device: {device.name} ({device.address}), RSSI: {advertisement.rssi}")
+        if is_coolledx:
+            (_key, value) = next(iter(advertisement.manufacturer_data.items()))
+            # Manufacturer data:
+            # [00 .. 05] = MAC address
+            # [06] = height
+            # [07] = 0?
+            # [08] = width
+            # [09] = 1?
+            # [10] = 0?
+            height = value[6]
+            width = value[8]
+            print(f"  Height: {height}, Width: {width}")
+
+        if args.extended:
+            await print_device_info(device, advertisement)
+
+
+async def _process_all_devices(devices: Any, args: Any) -> None:
+    """Process all discovered devices."""
+    for d, a in devices.values():
+        try:
+            await _process_device(d, a, args)
+        except BleakError as e:
+            print(f"Connection received Bleak error: {e}")
+
+
+async def detection_callback(
+    device: BLEDevice,
+    advertisement_data: AdvertisementData,
+) -> None:
+    """Handle device detection callback."""
+    LOGGER.debug("Device detected: %s %s", device, advertisement_data)
 
 
 async def print_device_info(
     device: BLEDevice,
     advertisement: AdvertisementData,
+    *,
     include_service_info: bool = True,
 ) -> None:
-    """Print information about a device"""
-
+    """Print information about a device."""
     print(advertisement)
     if include_service_info:
         await print_service_info(device)
 
 
 async def print_service_info(device: BLEDevice, timeout: float = 10.0) -> None:
-    """Use a BleakClient to read out the service characteristics for a device"""
-
+    """Use a BleakClient to read out the service characteristics for a device."""
     async with BleakClient(device, timeout=timeout) as client:
         for service in client.services:
             print(f"[Service] {service}")
@@ -54,28 +101,23 @@ async def print_service_info(device: BLEDevice, timeout: float = 10.0) -> None:
                     try:
                         value = await client.read_gatt_char(char.uuid)
                         print(
-                            f"  [Characteristic] {char} ({','.join( char.properties )})"
-                            ", Value: {value}"
+                            f"  [Characteristic] {char} ({','.join(char.properties)})"
+                            ", Value: {value}",
                         )
-                    except Exception:
+                    except BleakError as e:
                         print(
-                            f"  [Characteristic] {char} ({','.join( char.properties )})"
-                            ", Error: {e}"
+                            f"  [Characteristic] {char} ({','.join(char.properties)})"
+                            f", Error: {e}",
                         )
                 else:
-                    print(f"  [Characteristic] {char} ({','.join( char.properties )})")
+                    print(f"  [Characteristic] {char} ({','.join(char.properties)})")
 
                 for descriptor in char.descriptors:
-                    try:
-                        value = await client.read_gatt_descriptor(descriptor.handle)
-                        print(f"    [Descriptor] {descriptor}, Value: {value}")
-                    except Exception as e:
-                        print(f"    [Descriptor] {descriptor}, Error: {e}")
+                    await _print_descriptor_info(client, descriptor)
 
 
-async def main():
+async def main() -> None:
     """Scan bluetooth devices and print out what we find."""
-
     parser = argparse.ArgumentParser(description="Bluetooth scanning arguments.")
     parser.add_argument(
         "-a",
@@ -106,35 +148,11 @@ async def main():
     print()
 
     devices = await BleakScanner.discover(
-        detection_callback=detection_callback, timeout=args.timeout, return_adv=True
+        timeout=args.timeout,
+        return_adv=True,
     )
 
-    for d, a in devices.values():
-        try:
-            is_coolledx = d.name in COOLLEDX_DEVICE_NAMES
-            if is_coolledx or args.all:
-                print()
-                print("-" * 80)
-                print(f"Device: {d.name} ({d.address}), RSSI: {a.rssi}")
-                if is_coolledx:
-                    (key, value) = next(iter(a.manufacturer_data.items()))
-                    # Manufacturer data:
-                    # [00 .. 05] = MAC address
-                    # [06] = height
-                    # [07] = 0?
-                    # [08] = width
-                    # [09] = 1?
-                    # [10] = 0?
-                    height = value[6]
-                    width = value[8]
-                    print(f"  Height: {height}, Width: {width}")
-
-                if args.extended:
-                    await print_device_info(d, a)
-        except BleakError as e:
-            print(f"Connection received Bleak error: {e}")
-        except Exception as e:
-            print(f"Connection received unknown error: {e}")
+    await _process_all_devices(devices, args)
 
 
 if __name__ == "__main__":

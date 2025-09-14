@@ -1,0 +1,7 @@
+---
+description:  Use modular design in the source code
+globs: /src/**/*.*
+alwaysApply: false
+---
+- Implement modular design with distinct files for models, services, controllers and utilities
+- Use separate Python packages for major functional segregations that might be useful independent of specific use in this project

@@ -1,0 +1,6 @@
+---
+description:  Configuration for testing with Docker containers
+globs:
+alwaysApply: false
+---
+- Use the subdirectory ./local-instance as the base directory under which to find Docker volumes to mount for testing

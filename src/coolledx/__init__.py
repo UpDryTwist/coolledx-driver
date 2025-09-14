@@ -2,6 +2,7 @@ from enum import IntEnum, StrEnum
 
 __version__ = "0.0.1"
 
+__all__: list[str] = []
 
 class Mode(IntEnum):
     """The ways that text can move"""

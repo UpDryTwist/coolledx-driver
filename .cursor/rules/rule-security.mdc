@@ -1,0 +1,7 @@
+---
+description:  Apply appropriate security to the project
+globs: /**/*.*
+alwaysApply: false
+---
+- Follow OWASP guidelines
+- Sanitize all user inputs

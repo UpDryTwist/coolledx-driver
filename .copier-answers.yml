@@ -1,0 +1,13 @@
+# Changes here will be overwritten by Copier
+_commit: v0.0.2-15-ge8c4c81
+_src_path: https://github.com/UpDryTwist/stock-python-template.git
+author_email: tathamg@gmail.com
+author_name: UpDryTwist
+docker_project: coolledx
+project_description: Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)
+project_name: CoolLEDX Driver
+project_slug: coolledx_driver
+python_package: coolledx_driver
+python_package_command_line_name: coolledx
+python_version: '3.11'
+repository_name: coolledx-driver

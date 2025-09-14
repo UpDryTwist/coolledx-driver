@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "coolledx"
+name = "CoolLEDX Driver"
 version = "0.1.1-dev13"
 description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
 authors = ["UpDryTwist <tathamg@gmail.com>"]
@@ -8,26 +8,17 @@ readme = "README.md"
 repository = "https://github.com/UpDryTwist/coolledx-driver"
 documentation = "https://coolledx-driver.readthedocs.io/en/latest/"
 keywords = ["coolled", "coolledx", "led", "sign", "coolled1248"]
+homepage = "https://github.com/UpDryTwist/coolledx-driver"
+packages = [ { include = "coolledx", from = "src" } ]
 
-[project]
-name = "coolledx"
-version = "0.1.1-dev13"
-description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
-readme = "README.md"
-license = "MIT"
-keywords = ["coolled", "coolledx", "led", "sign", "coolled1248"]
-authors = ["UpDryTwist <tathamg@gmail.com>"]
-maintainers = ["UpDryTwist <tathamg@gmail.com>"]
-dynamic = ["version"]
-requires-python = ">=3.11,<3.13"
-dependencies = [
-    "bleak = ^0.21.1",
-    "Pillow = ^10.1.0-final1",
-]
+
+
+[tool.bandit]
+exclude_dirs = ["tests", "docs", "examples", ".venv", "dist", ".ruff_cache", ".github"]
 
 [tool.creosote]
 venvs = [".venv"]
-paths = ["coolledx", "tests", "utils"]
+paths = ["src", "tests", "utils"]
 deps-file = "pyproject.toml"
 sections = ["tool.poetry.dependencies"]
 
@@ -48,27 +39,27 @@ pythonVersion = "3.11"
 # typeCheckingMode = "strict"
 
 [tool.poetry.dependencies]
-# Bleak is limited to Python 3.8+, < 3.14
-# We require 3.11 due to some of the use of enums
-python = ">=3.11,<3.14"
-bleak = "^0.22.3"
-Pillow = "^11.0.0"
+# Python held to < 3.14 for bleak purposes
+python = ">=3.11,<4.0"
+bleak = "^1.1.1"
+Pillow = "^11.3.0"
 # This is just here so that you can run the utilities out of the Docker image ...
 pyshark = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
-poetry = "^1.7.1"
+poetry = "^2.2.0"
 pytest = ">=7.4.3,<9.0.0"
 pre-commit = "^4.0.1"
-ruff = "^0.8.0"
-black = "^24.10.0"
+ruff = "^0.13.0"
+black = "^25.1.0"
 make = "^0.1.6.post2"
 codespell = "^2.2.6"
 sphinx = ">=7.2.6,<9.0.0"
 sphinx-rtd-theme = "^3.0.2"
 pyright = "^1.1.390"
-pytest-cov = "^6.0.0"
-bump-my-version = "^0.28.1"
+pytest-cov = "^7.0.0"
+bump-my-version = "^1.2.2"
+copier = "^9.5.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,6 +1,50 @@
+[lint.per-file-ignores]
+"tests/*" = [
+    "S101", # Use of assert
+    "S101", # Use of assert
+    "ANN401", # Dynamically typed expressions
+    "ARG001", # Unused function argument (particularly for fixtures)
+    "ARG002", # Unused method argument
+    "ARG003", # Unused class method argument
+    "ARG004", # Unused static method argument
+    "ARG005", # Unused lambda argument
+    "FBT",  # Use of boolean as a positional argument
+    "PLR2004", # Magic value in comiparison
+    "S311",  # Standard pseudo-random generators are not suitable for security/cryptographic purposes
+    "SLF001", # Allow accessing private members in testing
+    "S603", # Parameters controlled by tests ...
+]
+"utils/scan.py" = [
+    "PERF203", # try-except in loop
+    "F841", # unused variable (false positive)
+]
+
 [lint]
 
-ignore = ["E501"]
+ignore = [
+    "E501", # Line too long
+    "D203", # 1 blank line required before class docstring
+    "D212", # Multi-line docstring should start on 1st line
+    "D205", # 1 blank line required between summary line and description
+    "D413", # Missing blank line after last section (in multi-line docstrings)
+    "FBT001", # Use of boolean as a positional argument
+    "C901", # McCabe
+    "PLR0912", # Too many positional arguments for function call
+    "PLR0913", # Too many arguments for function
+    "ISC001",  # Concatentate strings on same line
+    "PGH003", # Use of type:ignore without details
+    "FBT001", # Use of boolean as a positional argument
+    "EM101", # Use of string literals in exceptions
+    "EM102", # Use of f-strings in exceptions
+    "TRY301", # Abstract raise to inner function
+    "TRY003", # Long messages in exception class
+    "TD002", # TODOs must have author
+    "TD003", # TODOs must have issue link
+    "FIX002", # Allow TODOs in files
+    "TID252", # Allow relative imports
+    "ANN401", # Dynamically typed expressions
+    "T201", # Print statement
+]
 
 select = [
     # pycodestyle
@@ -15,4 +59,102 @@ select = [
     "SIM",
     # isort
     "I",
+    # Warnings
+    "W",
+    # McCabe
+    "C90",
+    # Naming
+    "N",
+    # PyDocStyle
+    "D",
+    # Flake8-2020 - misuse of sys.version
+    "YTT",
+    # Flake8-Annotations
+    "ANN",
+    # Flake8-Async
+    "ASYNC",
+    # Flake8-Bandit
+    "S",
+    # Flake8-blind-except
+    "BLE",
+    # Flake8-boolean-trap
+    "FBT",
+    # Flake8-Builtins
+    "A",
+    # Flake8-copyright - in preview as of 12/24
+    # "CPY",
+    # Flake8-comprehensions
+    "C4",
+    # Flake8-datetimez
+    "DTZ",
+    # Flake8-debugger
+    "T10",
+    # Flake8-Django
+    "DJ",
+    # Flake8-errmsg
+    "EM",
+    # Flake8-executable
+    "EXE",
+    # Flake8-future-annotations
+    "FA",
+    # Flake8-implicit-str-concat
+    "ISC",
+    # Flake8-import-conventions
+    "ICN",
+    # Flake8-logging
+    "LOG",
+    # Flake8-logging-format
+    "G",
+    # Flake8-no-0pep420
+    "INP",
+    # Flake8-pie
+    "PIE",
+    # Flake8-print
+    "T20",
+    # Flake8-pyi
+    "PYI",
+    # Flake8-pytest-style
+    "PT",
+    # Flake8-quotes
+    "Q",
+    # Flake8-raise
+    "RSE",
+    # Flake8-return
+    "RET",
+    # Flake8-self
+    "SLF",
+    # Flake8-slots
+    "SLOT",
+    # Flake8-tidy-imports
+    "TID",
+    # Flake8-type-checking
+    "TC",
+    # Flake8-gettext
+    "INT",
+    # Flake8-unused-arguments
+    "ARG",
+    # Flake8-use-pathlib - nah, os.path is fine
+    # "PTH",
+    # Flake8-todos
+    "TD",
+    # Flake8-fixme
+    "FIX",
+    # Flake8-pandas-vet
+    "PD",
+    # Flake8-pygrep-hooks
+    "PGH",
+    # PyLint
+    "PL",
+    # tryceratops
+    "TRY",
+    # Flynt
+    "FLY",
+    # Perflint
+    "PERF",
+    # Refurb
+    "FURB",
+    # pydoclint - in preview as of 12/24
+    # "DOC",
+    # Ruff-specific
+    "RUF",
 ]

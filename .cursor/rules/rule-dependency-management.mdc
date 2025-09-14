@@ -1,0 +1,6 @@
+---
+description:  Use Poetry for dependency management
+globs: /**/pyproject.toml
+alwaysApply: false
+---
+- Manage dependencies via Poetry and virtual environments

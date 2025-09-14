@@ -16,10 +16,13 @@ import pyshark
 from coolledx.decoder import CoolCommand
 
 
-def main():
+def main() -> None:
+    """Analyze Bluetooth logs to crack the packet protocol."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-f", "--file", help="Wireshark style packet capture file to analyze"
+        "-f",
+        "--file",
+        help="Wireshark style packet capture file to analyze",
     )
     parser.add_argument(
         "-a",
@@ -45,19 +48,24 @@ def main():
         default=True,
     )
     parser.add_argument(
-        "-t", "--tsharkpath", help="Path to tshark executable", default=None
+        "-t",
+        "--tsharkpath",
+        help="Path to tshark executable",
+        default=None,
     )
     args = parser.parse_args()
 
     # f" and btatt.handle == {args.handle}"
-    filter = (
+    bt_filter = (
         f"( bthci_acl.dst.bd_addr == {args.address} or bthci_acl.src.bd_addr == {args.address} ) "
         f" and ( btatt.characteristic_uuid16 == {args.uuid} or btatt.service_uuid16 == 0xfff0 or btatt.service_uuid16 == 0xfff1)"
     )
-    print(f"Filtering {args.file} on {filter}")
+    print(f"Filtering {args.file} on {bt_filter}")
 
     cap = pyshark.FileCapture(
-        args.file, display_filter=filter, tshark_path=args.tsharkpath
+        args.file,
+        display_filter=bt_filter,
+        tshark_path=args.tsharkpath,
     )
 
     commands = []

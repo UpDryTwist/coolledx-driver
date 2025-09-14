@@ -1,0 +1,6 @@
+---
+description:  Use Python version 3.13
+globs: **/*.py
+alwaysApply: false
+---
+- Use Python 3.13

@@ -1,0 +1,5 @@
+---
+description:  Manage configuration using a combination of environment variables and UpDryTwist config
+globs: ["/config", "/src/**/*.py"]
+alwaysApply: false
+---

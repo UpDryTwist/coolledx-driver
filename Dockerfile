@@ -55,7 +55,7 @@ RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
 
 COPY --from=builder --chown=${USER}:${GROUP} --chmod=0755 ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
-COPY --chown=${USER}:${GROUP} --chmod=0755 coolledx    /app/coolledx
+COPY --chown=${USER}:${GROUP} --chmod=0755 src/coolledx /app/coolledx
 COPY --chown=${USER}:${GROUP} --chmod=0755 run_scripts /app/run_scripts
 COPY --chown=${USER}:${GROUP} --chmod=0755 utils       /app/utils
 # COPY --chown=${USER}:${GROUP} --chmod=a+rw default_config /config
@@ -69,11 +69,11 @@ ENV PYTHONUNBUFFERED=1 \
     LOGFILE=/logs/coolledx.log
 
 # TODO:
-#    CONFIGFILE=/config/coolledx.yaml \
+#    CONFIGFILE=/config/coolledx_driver.yaml \
 
 VOLUME /config /logs
 
 # EXPOSE <port>
-ENTRYPOINT ["/app/run_scripts/start_coolledx.sh"]
+ENTRYPOINT ["/app/run_scripts/start_module.sh"]
 
 CMD []

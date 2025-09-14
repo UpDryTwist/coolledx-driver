@@ -2,7 +2,7 @@
 
 .. _sphinx-build: http://sphinx-doc.org/latest/contents.html
 
-Documentation for the CoolLEDX package
+Documentation for the coolledx_driver package
 ======================================
 
 .. toctree::

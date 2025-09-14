@@ -1,4 +1,4 @@
-"""Tests for Command"""
+"""Tests for Command."""
 
 import inspect
 import os
@@ -13,49 +13,51 @@ from coolledx.render import HeightTreatment, HorizontalAlignment, VerticalAlignm
 
 
 def file_path_in_test_dir(file_name: str) -> str:
-    """Return the path to a file in the tests directory"""
+    """Return the path to a file in the tests directory."""
     tests_path = os.path.dirname(
-        os.path.abspath(inspect.getfile(inspect.currentframe()))  # type: ignore
+        os.path.abspath(inspect.getfile(inspect.currentframe())),  # type: ignore[arg-type]
     )
 
     return f"{tests_path}/{file_name}"
 
 
-def test_escape_bytes():
+def test_escape_bytes() -> None:
+    """Test the escape_bytes method."""
     assert Command.escape_bytes(
-        bytearray(b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f")
+        bytearray(b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"),
     ) == bytearray(
-        b"\x00\x02\x05\x02\x06\x02\x07\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
-        # noqa: E501
+        b"\x00\x02\x05\x02\x06\x02\x07\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
     )
 
 
-def test_set_speed():
-    """Test the SetSpeed command"""
+def test_set_speed() -> None:
+    """Test the SetSpeed command."""
     command = SetSpeed(0x01)
     assert command.get_command_hexstr(False) == "0100020607020503"
     command = SetSpeed(0x00)
     assert command.get_command_hexstr(False) == "01000206070003"
     command = SetSpeed(0xFF)
     assert command.get_command_hexstr(False) == "0100020607ff03"
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Speed must be between 0x00 and 0xFF"):
         SetSpeed(-1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Speed must be between 0x00 and 0xFF"):
         SetSpeed(256)
 
 
-def confirm_chunks(chunks: list[bytearray], correct_values: list[str]):
+def confirm_chunks(chunks: list[bytearray], correct_values: list[str]) -> None:
+    """Confirm that the chunks match the expected values."""
     assert len(chunks) == len(correct_values)
     for i in range(len(chunks)):
         assert chunks[i].hex() == correct_values[i]
 
 
-def test_set_text():
+def test_set_text() -> None:
     """
+    Test the SetText command.
+
     The appropriate generate_testdata.py command for this is:
     python3 tests/generate_testdata.py --text "Hello, <#00ff00>world!" --color "#FF0000" --font arial --font-height 13  # noqa: E501
     """
-
     # This test will only run on Windows 11, probably, as it relies on specific
     # font rendering.
     if platform.system() != "Windows" or platform.release() != "11":
@@ -96,8 +98,10 @@ def test_set_text():
     )
 
 
-def test_set_image():
+def test_set_image() -> None:
     """
+    Test the SetImage command.
+
     The appropriate generate_testdata.py command for this is:
     python3 tests/generate_testdata.py --image test-image.png --height-treatment crop-pad --horizontal-alignment center --vertical-alignment bottom  # noqa: E501
     """
@@ -132,8 +136,10 @@ def test_set_image():
     )
 
 
-def test_set_animation():
+def test_set_animation() -> None:
     """
+    Test the SetAnimation command.
+
     The appropriate generate_testdata.py command for this is:
     python3 tests/generate_testdata.py --animation test-animation.gif --horizontal-alignment left # noqa: E501
     """

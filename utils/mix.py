@@ -1,22 +1,26 @@
 #!/usr/bin/python3
+"""
+Create a colorful text message.
 
-# creates a colorful text message
-# color mix can be specified using rgbymcwk as 2nd argument
+Color mix can be specified using rgbymcwk as 2nd argument.
+"""
 
-import os
+import subprocess  # nosec: B404
 import sys
 
-if len(sys.argv) < 2:
+MIN_ARGS = 2
+
+if len(sys.argv) < MIN_ARGS:
     print(
-        "-------------------------------------------------------------------------------"
+        "-------------------------------------------------------------------------------",
     )
     print(
         "Usage: "
         + sys.argv[0]
-        + ' "Text Message" <rgbymcwk (optional color mix)> <optional args>'
+        + ' "Text Message" <rgbymcwk (optional color mix)> <optional args>',
     )
     print(
-        "-------------------------------------------------------------------------------"
+        "-------------------------------------------------------------------------------",
     )
     sys.exit()
 
@@ -36,7 +40,9 @@ cmd = '"'
 text = sys.argv[1]
 oidx = len(sys.argv)
 
-if len(sys.argv) > 2:
+MIN_ARGS_WITH_COLOR = 3
+
+if len(sys.argv) > MIN_ARGS_WITH_COLOR - 1:
     j = True
     oidx = 2
     for color_char in sys.argv[2]:
@@ -45,7 +51,7 @@ if len(sys.argv) > 2:
             break
     if j:
         cidx = sys.argv[2]
-        oidx = 3
+        oidx = MIN_ARGS_WITH_COLOR
 
 for letter in text:
     if letter == " ":
@@ -57,10 +63,6 @@ for letter in text:
             i = 0
 
 cmd += '"'
-otherargs = ""
-# print(sys.argv)
-for a in range(oidx, len(sys.argv)):
-    otherargs += " " + sys.argv[a]
-cmd = "./tweak_sign.py -t " + cmd + otherargs
-print(cmd)
-os.system(cmd)
+cmd_args = ["./tweak_sign.py", "-t", cmd, *sys.argv[oidx:]]
+print(" ".join(cmd_args))
+subprocess.run(cmd_args, check=False)  # nosec: B603  # noqa: S603

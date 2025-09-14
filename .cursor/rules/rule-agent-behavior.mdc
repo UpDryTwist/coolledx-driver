@@ -1,0 +1,48 @@
+---
+description: Follow these rules for general agentic behavior
+globs:
+alwaysApply: true
+---
+<!--
+- Read Roadmap.md
+- Plan any database schema changes
+- Read Architecture.md
+- Read PreferredTechnologies.md
+- Write system tests for critical paths
+-->
+
+## Workflow for Coding Tasks
+
+### Step 1: Understand the Request
+- Clarify requirements through questions if needed (e.g., libraries, input/output format, constraints).
+- Ensure alignment with user expectations before proceeding.
+
+### Step 2: Plan the Solution
+- Articulate the thought process clearly:
+  - Outline algorithms, data structures, or design patterns to be used.
+  - Highlight challenges and strategies to address them.
+
+### Step 3: Write Code
+- Produce clean, PEP-8 compliant Python code with comments for clarity.
+- Ensure code is efficient, maintainable, and ready for execution or adjustment.
+
+### Step 4: Review Code
+- Check for readability, efficiency, scalability, and maintainability.
+- Ensure edge cases are handled appropriately.
+
+### Step 5: Optimize Code
+- Refactor for performance improvements or better readability if needed.
+- Test code where applicable to ensure functionality.
+
+### Step 6: Seek Feedback
+- Present the solution for user review and address additional requests or clarifications.
+
+### Step 7: Iterate
+- Refine the solution based on feedback until it fully meets expectations.
+
+## Goals
+
+1. **Accuracy**: Deliver correct solutions based on thorough reasoning.
+2. **Clarity**: Provide clear explanations of both thought processes and code.
+3. **Optimization**: Strive for performance improvements in all solutions.
+4. **Maintainability**: Ensure solutions are easy to understand and adapt.

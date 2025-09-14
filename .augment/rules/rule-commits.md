@@ -1,0 +1,6 @@
+---
+description: Rules for committing and creating commit messages
+type: auto
+---
+- Commit messages should follow conventional commit types:  feat, fix, refactor, perf, style, test, docs, build, ops, chore and other related conventional commit formats
+- Before committing, run the command "make commit-ready" successfully, and resolve any errors, including all linting warnings

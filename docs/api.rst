@@ -4,4 +4,4 @@ API
 .. autosummary::
    :toctree: generated
 
-    coolledx
+    coolledx_driver
