@@ -55,7 +55,7 @@ def parse_standard_arguments() -> argparse.Namespace:
         nargs="?",
     )
     parser.add_argument(
-        "-t", "--text", help="Text to display", default=DEFAULT_TEXT_TO_SEND
+        "-t", "--text", help="Text to display", default=DEFAULT_TEXT_TO_SEND,
     )
     parser.add_argument(
         "-s",
@@ -119,10 +119,10 @@ def parse_standard_arguments() -> argparse.Namespace:
         help="Mode of the scroller (1-8), or -1 to not touch",
     )
     parser.add_argument(
-        "-i", "--image", default=DEFAULT_IMAGE, help="Image file to display"
+        "-i", "--image", default=DEFAULT_IMAGE, help="Image file to display",
     )
     parser.add_argument(
-        "-n", "--animation", default=DEFAULT_ANIMATION, help="Animation file to display"
+        "-n", "--animation", default=DEFAULT_ANIMATION, help="Animation file to display",
     )
     parser.add_argument(
         "-N",
@@ -160,7 +160,7 @@ def parse_standard_arguments() -> argparse.Namespace:
         help="Vertical alignment (top/center/bottom)",
     )
     parser.add_argument(
-        "-jt", "--jtfile", default=DEFAULT_JT, help="JT file to display"
+        "-jt", "--jtfile", default=DEFAULT_JT, help="JT file to display",
     )
     parser.add_argument(
         "-u",

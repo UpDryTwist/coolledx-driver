@@ -61,7 +61,8 @@ class Client:
         command_timeout: float = DEFAULT_COMMAND_NOTIFY_TIMEOUT,
         connection_retries: int = DEFAULT_CONNECTION_RETRIES,
     ) -> None:
-        """Set up the client.
+        """
+        Set up the client.
 
         If address is None, then we will scan to find the first CoolLEDX device
         (nondeterministic if multiple devices are present).  So if you only have one
@@ -127,7 +128,7 @@ class Client:
                 if ble_device is None:
                     LOGGER.debug("Unable to locate a CoolLEDX/M device when scanning.")
                     raise BleakError(
-                        "Unable to locate a CoolLEDX/M device when scanning."
+                        "Unable to locate a CoolLEDX/M device when scanning.",
                     )
 
                 # In theory, we are supposed to now fetch
@@ -167,19 +168,18 @@ class Client:
             except BleakError as e:
                 LOGGER.warning(
                     f"Connection to CoolLEDX (address: {self.device_address}) "
-                    f"received exception: {e}"
+                    f"received exception: {e}",
                 )
                 if retries_remaining <= 0:
                     LOGGER.error(
-                        f"Connection failed after {self.connection_retries} "
-                        f"attempts."
+                        f"Connection failed after {self.connection_retries} attempts.",
                     )
                     raise e
                 await asyncio.sleep(CONNECTION_RETRY_DELAY)
         if self.bleak_client is None:
             raise TypeError("bleak_client should not be None after connection.")
         await self.bleak_client.start_notify(
-            self.characteristic_uuid, self.handle_notify
+            self.characteristic_uuid, self.handle_notify,
         )
 
     def handle_notify(self, sender: BleakGATTCharacteristic, data: bytearray) -> None:
@@ -191,7 +191,7 @@ class Client:
         if sender.uuid != self.characteristic_uuid:
             LOGGER.warning(
                 "Received notification from unexpected characteristic: from "
-                "{sender} data: {data.hex()}"
+                "{sender} data: {data.hex()}",
             )
         else:
             LOGGER.debug(f"Received notification: from {sender} data: {data.hex()}")
@@ -239,16 +239,16 @@ class Client:
                     if command.set_command_status(CommandStatus.TRANSMITTED):
                         LOGGER.error(
                             f"Command {command} did not receive a notification "
-                            f"within {self.command_timeout} seconds."
+                            f"within {self.command_timeout} seconds.",
                         )
                         break
-                    elif command.command_status == CommandStatus.ERROR:
+                    if command.command_status == CommandStatus.ERROR:
                         LOGGER.error(
                             f"Command {command} received an error response: "
-                            f"{ErrorCode.get_error_code_name(command.error_code)}({command.error_code})"
+                            f"{ErrorCode.get_error_code_name(command.error_code)}({command.error_code})",
                         )
                         raise CoolLedError(
-                            f"Command {command} received an error response: {ErrorCode.get_error_code_name(command.error_code)}({command.error_code})"
+                            f"Command {command} received an error response: {ErrorCode.get_error_code_name(command.error_code)}({command.error_code})",
                         )
 
         except Exception as e:
@@ -260,7 +260,7 @@ class Client:
         if self.bleak_client is None:
             raise TypeError("bleak_client should not be None after connection.")
         await self.bleak_client.write_gatt_char(
-            self.characteristic_uuid, data, response=expect_response
+            self.characteristic_uuid, data, response=expect_response,
         )
 
     async def write_hexstr(self, data: str, expect_response: bool = False) -> None:

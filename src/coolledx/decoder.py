@@ -46,12 +46,12 @@ class CoolCommand:
         raw_command_bytes = self.decode_command(raw_command_bytes)
         if raw_command_bytes[0] != 0x01:
             raise ValueError(
-                f"Invalid packet structure (opening byte != 0x01): {raw_command_bytes[0]:02X}"
+                f"Invalid packet structure (opening byte != 0x01): {raw_command_bytes[0]:02X}",
             )
         # The last byte should be 0x03
         if raw_command_bytes[-1] != 0x03:
             raise ValueError(
-                f"Invalid packet structure (closing byte != 0x03): {raw_command_bytes[-1]:02X}"
+                f"Invalid packet structure (closing byte != 0x03): {raw_command_bytes[-1]:02X}",
             )
 
         self.length = raw_command_bytes[1] * 256 + raw_command_bytes[2]
@@ -78,42 +78,41 @@ class CoolCommand:
     def action_string(self) -> str:
         if len(self.command) == 0:
             return "NA"
-        elif self.command[0] == 0x01:
+        if self.command[0] == 0x01:
             return "Music"
-        elif self.command[0] == 0x02:
+        if self.command[0] == 0x02:
             return "Text"
-        elif self.command[0] == 0x03:
+        if self.command[0] == 0x03:
             return "Image"
-        elif self.command[0] == 0x04:
+        if self.command[0] == 0x04:
             return "Animation"
-        elif self.command[0] == 0x05:
+        if self.command[0] == 0x05:
             return "Icon"
-        elif self.command[0] == 0x06:
+        if self.command[0] == 0x06:
             return "Mode"
-        elif self.command[0] == 0x07:
+        if self.command[0] == 0x07:
             return "Speed"
-        elif self.command[0] == 0x08:
+        if self.command[0] == 0x08:
             return "Brightness"
-        elif self.command[0] == 0x09:
+        if self.command[0] == 0x09:
             return "Switch"
-        elif self.command[0] == 0x0A:
+        if self.command[0] == 0x0A:
             return "Transfer"
-        elif self.command[0] == 0x0C:
+        if self.command[0] == 0x0C:
             return "Invert Display"
-        elif self.command[0] == 0x0D:
+        if self.command[0] == 0x0D:
             return "Clear Maybe"
-        elif self.command[0] == 0x11:
+        if self.command[0] == 0x11:
             return "Show Icon"
-        elif self.command[0] == 0x12:
+        if self.command[0] == 0x12:
             return "Power Down"
-        elif self.command[0] == 0x13:
+        if self.command[0] == 0x13:
             return "Power On"
-        elif self.command[0] == 0x15:
+        if self.command[0] == 0x15:
             return "Invert Or Something"
-        elif self.command[0] == 0x23:
+        if self.command[0] == 0x23:
             return "Initialize"
-        else:
-            return "Unknown {self.command[0]}"
+        return "Unknown {self.command[0]}"
 
     def __str__(self):
         lines = []

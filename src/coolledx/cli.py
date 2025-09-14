@@ -39,5 +39,5 @@ def main(args: list[str] | None = None) -> int:
     """
     parser = get_parser()
     opts = parser.parse_args(args=args)
-    print(opts)  # noqa: T201
+    print(opts)
     return 0

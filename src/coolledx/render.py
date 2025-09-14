@@ -55,7 +55,7 @@ def render_text_to_image(
             right_marker = color_markers[1]
         else:
             raise ValueError(
-                "color_markers must be a string of length 2 (2 chars) or a 2-tuple"
+                "color_markers must be a string of length 2 (2 chars) or a 2-tuple",
             )
 
         segments = text.split(right_marker)
@@ -87,7 +87,7 @@ def render_text_to_image(
         truetype_font = ImageFont.truetype(font, font_height)
     except Exception as e:
         LOGGER.warning(
-            f"Could not load font {font} (falling back to default font): {e}"
+            f"Could not load font {font} (falling back to default font): {e}",
         )
         truetype_font = ImageFont.load_default(font_height)
 
@@ -100,8 +100,7 @@ def render_text_to_image(
             bounding_box = draw.textbbox((0, 0), text, font=truetype_font)
             x_offset += bounding_box[2]
             height = bounding_box[3]
-            if height > y_max:
-                y_max = height
+            y_max = max(y_max, height)
         if color_str is not None:
             color = ImageColor.getrgb(color_str)
 
@@ -109,7 +108,7 @@ def render_text_to_image(
 
     # crop the canvas
     return img.crop(
-        (0, 0, x_offset, y_max + 1)
+        (0, 0, x_offset, y_max + 1),
     )  # pixel vertical adjustment prevents bottom text cut off
 
 
@@ -187,8 +186,8 @@ def get_separate_pixel_bytefields(
     # iterate column from top to bottom
     # (first 2 bytes will be the left column, most significant bit will be pixel
     # on the top)
-    for x in range(0, output_width):
-        for y in range(0, output_height):
+    for x in range(output_width):
+        for y in range(output_height):
             # replace pixels outside image with default
             if (
                 y < top_offset
@@ -250,7 +249,7 @@ def get_separate_pixel_bytefields_for_animation(
 
     animR, animG, animB = bytearray(), bytearray(), bytearray()
 
-    for frame in range(0, anim.n_frames if hasattr(anim, "n_frames") else 1):  # type: ignore
+    for frame in range(anim.n_frames if hasattr(anim, "n_frames") else 1):  # type: ignore
         # switch to next frame
         anim.seek(frame)
 
@@ -298,7 +297,7 @@ def create_image_output(
         buffer_length = 80
         if len(text) > 255:
             LOGGER.warning(
-                f"Text message length exceeds 255 characters; may not work on all signs.  {text}"
+                f"Text message length exceeds 255 characters; may not work on all signs.  {text}",
             )
             pixel_payload += len(text).to_bytes(2, byteorder="big")
             buffer_length = 79
@@ -327,7 +326,7 @@ def create_image_output(
         new_height = sign_height
         if width_treatment == WidthTreatment.LEFT_AS_IS:
             new_width = int(sign_height * width / height)
-            output_width = sign_width if new_width < sign_width else new_width
+            output_width = max(new_width, sign_width)
 
     if new_width != width or new_height != height:
         # scale the image to the height of the sign

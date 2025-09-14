@@ -1,6 +1,6 @@
 """
 Use this to generate data for the tests.
-OK, this is a bit self-referential . . . 
+OK, this is a bit self-referential . . .
 Obviously, only do this when you know that your code is good, so that the test
 data is good!
 
@@ -50,7 +50,7 @@ elif args.animation:
     )
 
 if command is None:
-    print("You must set either --text, --image, or --animation")  # noqa: T201
+    print("You must set either --text, --image, or --animation")
     sys.exit(1)
 
 chunks = command.get_command_chunks()
@@ -62,5 +62,5 @@ for chunk in chunks:
         hex_chunk[i : i + max_length] for i in range(0, len(hex_chunk), max_length)
     ]
     for line in lines:
-        print(f'    "{line}"')  # noqa: T201
-    print("    ,")  # noqa: T201
+        print(f'    "{line}"')
+    print("    ,")

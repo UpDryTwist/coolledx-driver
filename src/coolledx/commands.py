@@ -35,8 +35,6 @@ DEFAULT_DEVICE_HEIGHT = 16
 class CoolLedError(Exception):
     """Base class for exceptions in this module."""
 
-    pass
-
 
 class ErrorCode(Enum):
     """
@@ -88,20 +86,18 @@ class Command(abc.ABC):
     @abc.abstractmethod
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the set of commands as a bytearray."""
-        pass
 
     @staticmethod
     def escape_byte(byte: int) -> bytearray:
         """Bytes < 4 need to be escaped with 0x02."""
         if byte < 0x04:
             return bytearray([0x02, byte + 0x04])
-        else:
-            return bytearray([byte])
+        return bytearray([byte])
 
     @staticmethod
     def escape_bytes(bytes_to_escape: bytearray) -> bytes:
         data = re.sub(
-            re.compile(b"\x02", re.MULTILINE), b"\x02\x06", bytes_to_escape
+            re.compile(b"\x02", re.MULTILINE), b"\x02\x06", bytes_to_escape,
         )  # needs to be first
         data = re.sub(re.compile(b"\x01", re.MULTILINE), b"\x02\x05", data)
         data = re.sub(re.compile(b"\x03", re.MULTILINE), b"\x02\x07", data)
@@ -151,7 +147,7 @@ class Command(abc.ABC):
     def create_command(self, raw_data: bytearray) -> bytearray:
         """Create the command."""
         extended_data = bytearray().join(
-            [len(raw_data).to_bytes(2, byteorder="big"), raw_data]
+            [len(raw_data).to_bytes(2, byteorder="big"), raw_data],
         )
         return bytearray().join([b"\x01", self.escape_bytes(extended_data), b"\x03"])
 
@@ -199,8 +195,8 @@ class Command(abc.ABC):
             # Prepend our command byte for each chunk
             chunks.append(
                 bytearray().join(
-                    [command.to_bytes(1, byteorder="big"), formatted_chunk]
-                )
+                    [command.to_bytes(1, byteorder="big"), formatted_chunk],
+                ),
             )
         return chunks
 
@@ -209,9 +205,8 @@ class Command(abc.ABC):
         raw_data_chunks = self.get_command_raw_data_chunks()
         if self.is_raw_command():
             return raw_data_chunks
-        else:
-            chunks = [self.create_command(x) for x in raw_data_chunks]
-            return chunks
+        chunks = [self.create_command(x) for x in raw_data_chunks]
+        return chunks
 
     def get_command_hexstr(self, append_newline: bool = True) -> str:
         """Get the command as a hex string."""
@@ -270,7 +265,7 @@ class SetSpeed(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
-            bytearray.fromhex(f"{self.hardware.cmdbyte_speed():02x} {self.speed:02X}")
+            bytearray.fromhex(f"{self.hardware.cmdbyte_speed():02x} {self.speed:02X}"),
         ]
 
 
@@ -283,15 +278,15 @@ class SetBrightness(Command):
         """Legitimate brightness values are 0x00 to 0xFF."""
         if brightness < 0x00 or brightness > 0xFF:
             raise ValueError(
-                f"Brightness must be between 0x00 and 0xFF, not {brightness}"
+                f"Brightness must be between 0x00 and 0xFF, not {brightness}",
             )
         self.brightness = brightness
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_brightness():02x} {self.brightness:02X}"
-            )
+                f"{self.hardware.cmdbyte_brightness():02x} {self.brightness:02X}",
+            ),
         ]
 
 
@@ -331,7 +326,7 @@ class ShowChargingAnimation(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
-            bytearray(self.hardware.cmdbyte_showicon().to_bytes(1, byteorder="big"))
+            bytearray(self.hardware.cmdbyte_showicon().to_bytes(1, byteorder="big")),
         ]
 
     @staticmethod
@@ -354,8 +349,8 @@ class InvertDisplay(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_invertdisplay():02x} {self.inverted:02X}"
-            )
+                f"{self.hardware.cmdbyte_invertdisplay():02x} {self.inverted:02X}",
+            ),
         ]
 
     @staticmethod
@@ -373,8 +368,8 @@ class InvertOrSomething(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
             bytearray(
-                self.hardware.cmdbyte_invertorsomething().to_bytes(1, byteorder="big")
-            )
+                self.hardware.cmdbyte_invertorsomething().to_bytes(1, byteorder="big"),
+            ),
         ]
 
     @staticmethod
@@ -395,15 +390,15 @@ class StartupWithBatteryLevel(Command):
         """Legitimate battery levels are 0x00 to 0xFF."""
         if battery_level < 0x00 or battery_level > 0xFF:
             raise ValueError(
-                f"Battery level must be between 0x00 and 0xFF, not {battery_level}"
+                f"Battery level must be between 0x00 and 0xFF, not {battery_level}",
             )
         self.battery_level = battery_level
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_initialize():02x} {self.battery_level:02X}"
-            )
+                f"{self.hardware.cmdbyte_initialize():02x} {self.battery_level:02X}",
+            ),
         ]
 
 
@@ -412,7 +407,7 @@ class PowerDown(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
-            bytearray(self.hardware.cmdbyte_powerdown().to_bytes(1, byteorder="big"))
+            bytearray(self.hardware.cmdbyte_powerdown().to_bytes(1, byteorder="big")),
         ]
 
     @staticmethod
@@ -434,7 +429,7 @@ class SetMode(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         return [
-            bytearray.fromhex(f"{self.hardware.cmdbyte_mode():02x} {self.mode:02X}")
+            bytearray.fromhex(f"{self.hardware.cmdbyte_mode():02x} {self.mode:02X}"),
         ]
 
     @staticmethod
@@ -454,9 +449,9 @@ class SetMusicBars(Command):
 
     def __init__(self, heights: bytearray, colors: bytearray) -> None:
         if len(heights) != 8:
-            raise ValueError(f"Heights must be 8 bytes, not {len( heights )}")
+            raise ValueError(f"Heights must be 8 bytes, not {len(heights)}")
         if len(colors) != 8:
-            raise ValueError(f"Colors must be 8 bytes, not {len( colors )}")
+            raise ValueError(f"Colors must be 8 bytes, not {len(colors)}")
         self.heights = heights
         self.colors = colors
 
@@ -465,8 +460,8 @@ class SetMusicBars(Command):
         # that heights and colors are integrated into a half byte each.
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}"
-            )
+                f"{self.hardware.cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}",
+            ),
         ]
 
     @staticmethod
