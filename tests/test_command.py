@@ -33,11 +33,11 @@ def test_escape_bytes() -> None:
 def test_set_speed() -> None:
     """Test the SetSpeed command."""
     command = SetSpeed(0x01)
-    assert command.get_command_hexstr(False) == "0100020607020503"
+    assert command.get_command_hexstr(append_newline=False) == "0100020607020503"
     command = SetSpeed(0x00)
-    assert command.get_command_hexstr(False) == "01000206070003"
+    assert command.get_command_hexstr(append_newline=False) == "01000206070003"
     command = SetSpeed(0xFF)
-    assert command.get_command_hexstr(False) == "0100020607ff03"
+    assert command.get_command_hexstr(append_newline=False) == "0100020607ff03"
     with pytest.raises(ValueError, match="Speed must be between 0x00 and 0xFF"):
         SetSpeed(-1)
     with pytest.raises(ValueError, match="Speed must be between 0x00 and 0xFF"):

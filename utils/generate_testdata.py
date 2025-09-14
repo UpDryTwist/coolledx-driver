@@ -1,4 +1,6 @@
 """
+Generate test data for the tests.
+
 Use this to generate data for the tests.
 OK, this is a bit self-referential . . .
 Obviously, only do this when you know that your code is good, so that the test

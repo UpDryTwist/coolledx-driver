@@ -1,15 +1,20 @@
 """Client class for sending commands to the CoolLEDX device."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
+from typing import TYPE_CHECKING, Self
 
 from bleak import (
     BleakClient,
     BleakScanner,
 )
-from bleak.backends.characteristic import BleakGATTCharacteristic
-from bleak.backends.device import BLEDevice
 from bleak.exc import BleakError
+
+if TYPE_CHECKING:
+    from bleak.backends.characteristic import BleakGATTCharacteristic
+    from bleak.backends.device import BLEDevice
 
 from .commands import Command, CommandStatus, CoolLedError, ErrorCode
 from .decoder import CoolCommand
@@ -88,11 +93,18 @@ class Client:
 
     # Support async context management
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
+        """Enter async context manager."""
         await self.connect()
         return self
 
-    async def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object,
+    ) -> None:
+        """Exit async context manager."""
         await self.disconnect()
 
     async def connect(self) -> None:
@@ -102,14 +114,14 @@ class Client:
         fails; not sure exactly what causes this, but seems fairly easy to recover
         this way.
         """
-        LOGGER.debug(f"Initiating a connection to the device: {self.device_address}")
+        LOGGER.debug("Initiating a connection to the device: %s", self.device_address)
         retries_remaining = self.connection_retries
         while retries_remaining > 0:
             try:
                 retries_remaining -= 1
                 if self.device_address is None:
-                    LOGGER.debug(f"Locating device by name {self.device_name}")
-                    ble_device = await BleakScanner.find_device_by_name(  # type: ignore
+                    LOGGER.debug("Locating device by name %s", self.device_name)
+                    ble_device = await BleakScanner.find_device_by_name(  # type: ignore[misc]
                         name=(
                             self.device_name
                             if self.device_name
@@ -118,9 +130,9 @@ class Client:
                         timeout=self.connection_timeout,
                     )
                 else:
-                    LOGGER.debug(f"Locating device by address {self.device_address}")
+                    LOGGER.debug("Locating device by address %s", self.device_address)
                     ble_device = await BleakScanner.find_device_by_address(
-                        # type: ignore
+                        # type: ignore[misc]
                         device_identifier=self.device_address,
                         timeout=self.connection_timeout,
                     )
@@ -138,8 +150,8 @@ class Client:
                 # warning.
                 # TODO:  Fix this to read the advertisement data during the scan, which
                 #  will require rewriting the entire scanning process :(.
-                manufacturer_data = ble_device.metadata["manufacturer_data"]
-                (key, value) = next(iter(manufacturer_data.items()))
+                manufacturer_data = ble_device.metadata.get("manufacturer_data", {})  # type: ignore[misc]
+                (_key, value) = next(iter(manufacturer_data.items()))
                 # Manufacturer data:
                 # [00 .. 05] = MAC address
                 # [06] = height
@@ -156,9 +168,9 @@ class Client:
                     disconnected_callback=self.handle_disconnect,
                     # services=[ SERVICE_FFF0_CHAR ]  >> filtering doesn't work!
                 )
-                LOGGER.debug(f"Connecting to device: {ble_device}")
+                LOGGER.debug("Connecting to device: %s", ble_device)
                 await bleak_client.connect()
-                LOGGER.debug(f"Connected to device: {ble_device}")
+                LOGGER.debug("Connected to device: %s", ble_device)
                 # Wait to set these until we're sure it's a successful connection
                 self.ble_device = ble_device
                 self.bleak_client = bleak_client
@@ -167,36 +179,42 @@ class Client:
                 break
             except BleakError as e:
                 LOGGER.warning(
-                    f"Connection to CoolLEDX (address: {self.device_address}) "
-                    f"received exception: {e}",
+                    "Connection to CoolLEDX (address: %s) received exception: %s",
+                    self.device_address,
+                    e,
                 )
                 if retries_remaining <= 0:
-                    LOGGER.error(
-                        f"Connection failed after {self.connection_retries} attempts.",
+                    LOGGER.exception(
+                        "Connection failed after %s attempts.",
+                        self.connection_retries,
                     )
-                    raise e
+                    raise
                 await asyncio.sleep(CONNECTION_RETRY_DELAY)
         if self.bleak_client is None:
             raise TypeError("bleak_client should not be None after connection.")
         await self.bleak_client.start_notify(
-            self.characteristic_uuid, self.handle_notify,
+            self.characteristic_uuid,
+            self.handle_notify,
         )
 
     def handle_notify(self, sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """
-        The device called us back after we sent a command.  We listen here just for
+        Handle device notification callback.
+
+        The device called us back after we sent a command. We listen here just for
         monitoring purposes at this point (an older version of the code used this to
         delay for the notification and manage an event).
         """
         if sender.uuid != self.characteristic_uuid:
             LOGGER.warning(
-                "Received notification from unexpected characteristic: from "
-                "{sender} data: {data.hex()}",
+                "Received notification from unexpected characteristic: from %s data: %s",
+                sender,
+                data.hex(),
             )
         else:
-            LOGGER.debug(f"Received notification: from {sender} data: {data.hex()}")
-            cmd = CoolCommand(False, "Sign", "Us", sender.handle, data)
-            LOGGER.debug(f"Received notification (decoded): {cmd}")
+            LOGGER.debug("Received notification: from %s data: %s", sender, data.hex())
+            cmd = CoolCommand(False, "Sign", "Us", sender.handle, data)  # noqa: FBT003
+            LOGGER.debug("Received notification (decoded): %s", cmd)
             if self.current_command:
                 # TODO:  This isn't entirely accurate.  I just don't know how to
                 #        properly interpret the errors from the devices yet.
@@ -209,8 +227,8 @@ class Client:
 
     @staticmethod
     def handle_disconnect(client: BleakClient) -> None:
-        """We received a disconnect from the BLE implementation."""
-        LOGGER.info(f"Disconnected from device: {client}")
+        """Handle BLE disconnect callback."""
+        LOGGER.info("Disconnected from device: %s", client)
         # We don't need to actually do anything, as we'll pick up the disconnected
         # state and reconnect if we need to when we issue our next command.
 
@@ -227,46 +245,60 @@ class Client:
         chunks = command.get_command_chunks()
         try:
             for chunk in chunks:
-                LOGGER.debug(f"Sending chunk: {chunk.hex()}")
-                cmd = CoolCommand(True, "Us", "Sign", 0x00, chunk)
-                LOGGER.debug(f"Sending command: {cmd}")
+                LOGGER.debug("Sending chunk: %s", chunk.hex())
+                cmd = CoolCommand(True, "Us", "Sign", 0x00, chunk)  # noqa: FBT003
+                LOGGER.debug("Sending command: %s", cmd)
                 self.current_command = command
                 command.command_status = CommandStatus.TRANSMITTED
                 command.set_future(asyncio.get_event_loop().create_future())
-                await self.write_raw(chunk, command.expect_notify())
+                await self.write_raw(chunk, expect_response=command.expect_notify())
                 if command.expect_notify() and command.future:
                     await asyncio.wait_for(command.future, timeout=self.command_timeout)
-                    if command.set_command_status(CommandStatus.TRANSMITTED):
+                    if command.command_status == CommandStatus.TRANSMITTED:
                         LOGGER.error(
-                            f"Command {command} did not receive a notification "
-                            f"within {self.command_timeout} seconds.",
+                            "Command %s did not receive a notification within %s seconds.",
+                            command,
+                            self.command_timeout,
                         )
                         break
                     if command.command_status == CommandStatus.ERROR:
+                        error_name = ErrorCode.get_error_code_name(command.error_code)
                         LOGGER.error(
-                            f"Command {command} received an error response: "
-                            f"{ErrorCode.get_error_code_name(command.error_code)}({command.error_code})",
+                            "Command %s received an error response: %s(%s)",
+                            command,
+                            error_name,
+                            command.error_code,
                         )
                         raise CoolLedError(
-                            f"Command {command} received an error response: {ErrorCode.get_error_code_name(command.error_code)}({command.error_code})",
+                            f"Command {command} received an error response: {error_name}({command.error_code})",
                         )
 
-        except Exception as e:
-            LOGGER.error(f"Error sending command: {command} {e}")
+        except Exception:
+            LOGGER.exception("Error sending command: %s", command)
             self.current_command = None
-            raise e
+            raise
 
-    async def write_raw(self, data: bytearray, expect_response: bool = False) -> None:
+    async def write_raw(
+        self,
+        data: bytearray,
+        *,
+        expect_response: bool = False,
+    ) -> None:
+        """Write raw data to the device characteristic."""
         if self.bleak_client is None:
             raise TypeError("bleak_client should not be None after connection.")
         await self.bleak_client.write_gatt_char(
-            self.characteristic_uuid, data, response=expect_response,
+            self.characteristic_uuid,
+            data,
+            response=expect_response,
         )
 
-    async def write_hexstr(self, data: str, expect_response: bool = False) -> None:
-        await self.write_raw(bytearray.fromhex(data), expect_response)
+    async def write_hexstr(self, data: str, *, expect_response: bool = False) -> None:
+        """Write hex string data to the device characteristic."""
+        await self.write_raw(bytearray.fromhex(data), expect_response=expect_response)
 
     async def disconnect(self) -> None:
+        """Disconnect from the BLE device."""
         if self.bleak_client is not None:
-            LOGGER.debug(f"Disconnecting from device: {self.bleak_client}")
+            LOGGER.debug("Disconnecting from device: %s", self.bleak_client)
             await self.bleak_client.stop_notify(self.characteristic_uuid)

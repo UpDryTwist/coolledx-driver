@@ -1,5 +1,7 @@
 """Rendering functions for the CoolLEDx sign."""
 
+from __future__ import annotations
+
 import json
 import logging
 
@@ -21,6 +23,11 @@ from coolledx import (
 
 LOGGER = logging.getLogger(__name__)
 
+# Constants
+PIXELS_PER_BYTE = 8
+MAX_TEXT_LENGTH = 255
+COLOR_MARKER_COUNT = 2
+
 
 def render_text_to_image(
     text: str,
@@ -34,8 +41,10 @@ def render_text_to_image(
     ),
 ) -> Image.Image:
     """
-    This will take text that has embedded color information, and render it to an
-    image.  The text may have embedded colors specified between the defined
+    Render text with embedded color information to an image.
+
+    Take text that has embedded color information, and render it to an
+    image. The text may have embedded colors specified between the defined
     color_markers (defaults to <>; you'd want to change if your text might include
     these characters). The text should be of the form:
     <color1>text1<color2>text2<color3>text3
@@ -50,7 +59,7 @@ def render_text_to_image(
         parts = [(default_color, text)]
     else:
         parts = []
-        if len(color_markers) == 1 or len(color_markers) == 2:
+        if len(color_markers) == 1 or len(color_markers) == COLOR_MARKER_COUNT:
             left_marker = color_markers[0]
             right_marker = color_markers[1]
         else:
@@ -85,9 +94,11 @@ def render_text_to_image(
 
     try:
         truetype_font = ImageFont.truetype(font, font_height)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         LOGGER.warning(
-            f"Could not load font {font} (falling back to default font): {e}",
+            "Could not load font %s (falling back to default font): %s",
+            font,
+            e,
         )
         truetype_font = ImageFont.load_default(font_height)
 
@@ -116,30 +127,31 @@ def get_separate_pixel_bytefields(
     img: Image.Image,
     output_width: int,
     output_height: int,
-    bgColor=DEFAULT_BACKGROUND_COLOR,
+    bg_color: str = DEFAULT_BACKGROUND_COLOR,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
-):
+) -> tuple[bytearray, bytearray, bytearray]:
     """
-    This generates the bytefields for the red, green, and blue components of the image.
-    :param img:
-    :param output_width: for a normal image, can be anything; animations must fit the
+    Generate the bytefields for the red, green, and blue components of the image.
+
+    :param img: The image to process
+    :param output_width: For a normal image, can be anything; animations must fit the
                          screen exactly
-    :param output_height: this should be the screen height always
-    :param bgColor: color to use for fill pixels (outside the image)
-    :param horizontal_alignment:
-    :param vertical_alignment:
-    :return: the bytefields for the red, green, and blue components of the image
+    :param output_height: This should be the screen height always
+    :param bg_color: Color to use for fill pixels (outside the image)
+    :param horizontal_alignment: How to align the image horizontally
+    :param vertical_alignment: How to align the image vertically
+    :return: The bytefields for the red, green, and blue components of the image
     """
-    if output_height % 8 != 0:
+    if output_height % PIXELS_PER_BYTE != 0:
         raise ValueError("target-height needs to be divisible by 8")
 
     # Declare these to stabilize type checking
-    defaultPx: tuple[int, int, int]
+    default_px: tuple[int, int, int]
     px: tuple[int, int, int]
 
     image_width, image_height = img.size
-    defaultPx = ImageColor.getrgb(bgColor)  # type: ignore
+    default_px = ImageColor.getrgb(bg_color)  # type: ignore[misc]
 
     left_offset = 0
     top_offset = 0
@@ -178,10 +190,10 @@ def get_separate_pixel_bytefields(
             img = img.crop((0, image_height - output_height, image_width, image_height))
 
     # buffer to hold the separate pixels
-    barr_R, barr_G, barr_B = bytearray(), bytearray(), bytearray()
+    barr_r, barr_g, barr_b = bytearray(), bytearray(), bytearray()
 
     # temp values to shift the separate color bits while we iterate the pixels
-    tmp_R, tmp_G, tmp_B = 0, 0, 0
+    tmp_r, tmp_g, tmp_b = 0, 0, 0
 
     # iterate column from top to bottom
     # (first 2 bytes will be the left column, most significant bit will be pixel
@@ -195,24 +207,24 @@ def get_separate_pixel_bytefields(
                 or y >= image_height + top_offset
                 or x >= image_width + left_offset
             ):
-                px = defaultPx
+                px = default_px
             else:
-                px = img.getpixel((x - left_offset, y - top_offset))  # type: ignore
+                px = img.getpixel((x - left_offset, y - top_offset))  # type: ignore[misc]
 
             # for each color, add one bit for the current pixel (i.e., 1 if
             # color-component is > 127)
-            tmp_R = (tmp_R << 1) + int(round(px[0] / 255))
-            tmp_G = (tmp_G << 1) + int(round(px[1] / 255))
-            tmp_B = (tmp_B << 1) + int(round(px[2] / 255))
+            tmp_r = (tmp_r << 1) + round(px[0] / 255)
+            tmp_g = (tmp_g << 1) + round(px[1] / 255)
+            tmp_b = (tmp_b << 1) + round(px[2] / 255)
 
             # for every 8th pixel, add the byte to the bytefield and begin a new one
-            if y % 8 == 7:
-                barr_R.append(tmp_R)
-                barr_G.append(tmp_G)
-                barr_B.append(tmp_B)
-                tmp_R, tmp_G, tmp_B = 0, 0, 0
+            if y % PIXELS_PER_BYTE == (PIXELS_PER_BYTE - 1):  # Every 8th pixel
+                barr_r.append(tmp_r)
+                barr_g.append(tmp_g)
+                barr_b.append(tmp_b)
+                tmp_r, tmp_g, tmp_b = 0, 0, 0
 
-    return barr_R, barr_G, barr_B
+    return barr_r, barr_g, barr_b
 
 
 def get_separate_pixel_bytefields_for_animation(
@@ -220,22 +232,23 @@ def get_separate_pixel_bytefields_for_animation(
     sign_width: int,
     sign_height: int,
     background_color: str = DEFAULT_BACKGROUND_COLOR,
-    width_treatment: WidthTreatment = WidthTreatment.SCALE,
-    height_treatment: HeightTreatment = HeightTreatment.SCALE,
+    _width_treatment: WidthTreatment = WidthTreatment.SCALE,
+    _height_treatment: HeightTreatment = HeightTreatment.SCALE,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.CENTER,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> tuple[bytearray, bytearray, bytearray]:
     """
-    This generates the bytefields for the red, green, and blue components
-    :param anim:
-    :param sign_width: all animations must be forced into exactly the sign width
-    :param sign_height: should be the screen height always
-    :param background_color: color to use for fill pixels (outside the image)
-    :param width_treatment:
-    :param height_treatment:
-    :param horizontal_alignment:
-    :param vertical_alignment:
-    :return:
+    Generate the bytefields for the red, green, and blue components.
+
+    :param anim: The animation image to process
+    :param sign_width: All animations must be forced into exactly the sign width
+    :param sign_height: Should be the screen height always
+    :param background_color: Color to use for fill pixels (outside the image)
+    :param width_treatment: How to treat width scaling
+    :param height_treatment: How to treat height scaling
+    :param horizontal_alignment: How to align horizontally
+    :param vertical_alignment: How to align vertically
+    :return: Tuple of red, green, blue bytefields
     """
     # TODO:  Use width_treatment and height_treatment to scale the animation to
     #  the sign's size
@@ -247,9 +260,9 @@ def get_separate_pixel_bytefields_for_animation(
 
     combined_image = None
 
-    animR, animG, animB = bytearray(), bytearray(), bytearray()
+    anim_r, anim_g, anim_b = bytearray(), bytearray(), bytearray()
 
-    for frame in range(anim.n_frames if hasattr(anim, "n_frames") else 1):  # type: ignore
+    for frame in range(anim.n_frames if hasattr(anim, "n_frames") else 1):  # type: ignore[misc]
         # switch to next frame
         anim.seek(frame)
 
@@ -260,7 +273,7 @@ def get_separate_pixel_bytefields_for_animation(
             combined_image = Image.alpha_composite(combined_image, anim.convert("RGBA"))
 
         # Animations need to be force-fit to the size of the sign.
-        frameR, frameG, frameB = get_separate_pixel_bytefields(
+        frame_r, frame_g, frame_b = get_separate_pixel_bytefields(
             combined_image,
             sign_width,
             sign_height,
@@ -269,12 +282,12 @@ def get_separate_pixel_bytefields_for_animation(
             vertical_alignment,
         )
 
-        animR += frameR
-        animG += frameG
-        animB += frameB
+        anim_r += frame_r
+        anim_g += frame_g
+        anim_b += frame_b
 
     # returns all-pixels of all frames separately for each of the 3 color-components
-    return animR, animG, animB
+    return anim_r, anim_g, anim_b
 
 
 def create_image_output(
@@ -288,6 +301,7 @@ def create_image_output(
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> bytearray:
+    """Create image output payload for the sign."""
     # create the image payload
     pixel_payload = bytearray()
     # unknown 24 zero-bytes
@@ -295,9 +309,10 @@ def create_image_output(
 
     if text is not None:
         buffer_length = 80
-        if len(text) > 255:
+        if len(text) > MAX_TEXT_LENGTH:
             LOGGER.warning(
-                f"Text message length exceeds 255 characters; may not work on all signs.  {text}",
+                "Text message length exceeds 255 characters; may not work on all signs.  %s",
+                text,
             )
             pixel_payload += len(text).to_bytes(2, byteorder="big")
             buffer_length = 79
@@ -332,7 +347,7 @@ def create_image_output(
         # scale the image to the height of the sign
         image = image.resize((new_width, new_height))
 
-    bR, bG, bB = get_separate_pixel_bytefields(
+    b_r, b_g, b_b = get_separate_pixel_bytefields(
         image,
         output_width,
         sign_height,
@@ -342,7 +357,7 @@ def create_image_output(
     )
 
     # all the pixel-bits RGB
-    pixel_bits_all = bytearray().join([bR, bG, bB])
+    pixel_bits_all = bytearray().join([b_r, b_g, b_b])
     # size of the pixel payload in its un-split form.
     pixel_payload += len(pixel_bits_all).to_bytes(2, byteorder="big")
     # all the pixel-bits
@@ -363,12 +378,14 @@ def create_text_payload(
         DEFAULT_START_COLOR_MARKER,
         DEFAULT_END_COLOR_MARKER,
     ),
+    *,
     render_as_text: bool = True,
     width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
     height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> bytearray:
+    """Create text payload for the sign."""
     im = render_text_to_image(
         txt,
         default_color=default_color,
@@ -401,6 +418,7 @@ def create_image_payload(
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> bytearray:
+    """Create image payload from file for the sign."""
     im = Image.open(filename).convert("RGB")
     return create_image_output(
         im,
@@ -426,20 +444,21 @@ def create_animation_payload(
     horizontal_alignment: HorizontalAlignment = HorizontalAlignment.CENTER,
     vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> bytearray:
+    """Create animation payload from file for the sign."""
     anim = Image.open(filename)
-    frames = anim.n_frames if hasattr(anim, "n_frames") else 1  # type: ignore
-    animR, animG, animB = get_separate_pixel_bytefields_for_animation(
+    frames = anim.n_frames if hasattr(anim, "n_frames") else 1  # type: ignore[misc]
+    anim_r, anim_g, anim_b = get_separate_pixel_bytefields_for_animation(
         anim,
-        sign_width=sign_width,
-        sign_height=sign_height,
-        background_color=background_color,
-        width_treatment=width_treatment,
-        height_treatment=height_treatment,
-        horizontal_alignment=horizontal_alignment,
-        vertical_alignment=vertical_alignment,
+        sign_width,
+        sign_height,
+        background_color,
+        width_treatment,
+        height_treatment,
+        horizontal_alignment,
+        vertical_alignment,
     )
     # all the pixel-bits RGB
-    pixel_bits_all = bytearray().join([animR, animG, animB])
+    pixel_bits_all = bytearray().join([anim_r, anim_g, anim_b])
 
     # create the image payload
     pixel_payload = bytearray()
@@ -455,31 +474,32 @@ def create_animation_payload(
     return pixel_payload
 
 
-def create_JT_payload(
+def create_jt_payload(
     filename: str,
-    sign_width: int,
-    sign_height: int,
-    background_color: str = DEFAULT_BACKGROUND_COLOR,
-    width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
-    height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
-    horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
-    vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
+    _sign_width: int,
+    _sign_height: int,
+    _background_color: str = DEFAULT_BACKGROUND_COLOR,
+    _width_treatment: WidthTreatment = WidthTreatment.LEFT_AS_IS,
+    _height_treatment: HeightTreatment = HeightTreatment.CROP_PAD,
+    _horizontal_alignment: HorizontalAlignment = HorizontalAlignment.NONE,
+    _vertical_alignment: VerticalAlignment = VerticalAlignment.CENTER,
 ) -> tuple[bytearray, bool]:
+    """Create JT payload from file for the sign."""
     #    im = Image.open(filename).convert("RGB")
     render_as_image = False  # Until proven otherwise . .
     frames = 1  # Until proven otherwise . .
     speed = 0  # Until proven otherwise . .
-    jtrgbdata = None  # Until proven otherwise . .
+    jt_rgb_data = None  # Until proven otherwise . .
 
     with open(filename) as f:
         jtf = f.read()
         jt = json.loads(jtf)[0]  # json.loads(f)[0] JT data to dictionary
     if "aniData" in list(jt["data"]):
-        jtrgbdata = jt["data"]["aniData"]
+        jt_rgb_data = jt["data"]["aniData"]
         render_as_image = False
     if "graffitiData" in list(jt["data"]):
         render_as_image = True
-        jtrgbdata = jt["data"]["graffitiData"]
+        jt_rgb_data = jt["data"]["graffitiData"]
     # Unused - prefix with _ to suppress warning
     _sign_width = jt["data"]["pixelWidth"]
     _sign_height = jt["data"]["pixelHeight"]
@@ -503,8 +523,8 @@ def create_JT_payload(
         pixel_payload += speed.to_bytes(2, byteorder="big")
     # --------animation-------------------
 
-    if jtrgbdata is not None:
-        pixel_bits_all = bytearray(jtrgbdata)
+    if jt_rgb_data is not None:
+        pixel_bits_all = bytearray(jt_rgb_data)
         # size of the pixel payload in its un-split form.
         pixel_payload += len(pixel_bits_all).to_bytes(2, byteorder="big")
         # all the pixel-bits

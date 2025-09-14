@@ -1,3 +1,5 @@
+"""CoolLEDX driver package."""
+
 from enum import IntEnum, StrEnum
 
 __version__ = "0.0.1"
@@ -6,7 +8,7 @@ __all__: list[str] = []
 
 
 class Mode(IntEnum):
-    """The ways that text can move"""
+    """The ways that text can move."""
 
     STATIC = 0x01
     LEFT = 0x02
@@ -41,7 +43,7 @@ class WidthTreatment(StrEnum):
 
 
 class HorizontalAlignment(StrEnum):
-    """Horizontal alignment of text/image on the sign"""
+    """Horizontal alignment of text/image on the sign."""
 
     LEFT = "left"
     CENTER = "center"
@@ -50,7 +52,7 @@ class HorizontalAlignment(StrEnum):
 
 
 class VerticalAlignment(StrEnum):
-    """Vertical alignment of text/image on the sign"""
+    """Vertical alignment of text/image on the sign."""
 
     TOP = "top"
     CENTER = "center"
