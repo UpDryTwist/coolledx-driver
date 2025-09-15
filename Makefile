@@ -171,6 +171,15 @@ endif
 # You need to set up buildx. Run `docker buildx create --name mybuilder` and `docker buildx use mybuilder`
 docker-build:
 ifeq ($(BUILD_DOCKER),true)
+	@docker buildx build --platform linux/amd64 \
+		-t $(DOCKER_REPO)/$(DOCKER_PROJ):$(VERSION) \
+		-t $(DOCKER_REPO)/$(DOCKER_PROJ):latest \
+		--push .
+endif
+
+# Multi-architecture build (use this once size is optimized)
+docker-build-multi:
+ifeq ($(BUILD_DOCKER),true)
 	@docker buildx build --platform linux/amd64,linux/arm64 \
 		-t $(DOCKER_REPO)/$(DOCKER_PROJ):$(VERSION) \
 		-t $(DOCKER_REPO)/$(DOCKER_PROJ):latest \
@@ -216,7 +225,7 @@ fast-build: just-unit version-build
 
 full-build: full-commit-ready version-build
 
-max-build: autoupdate full-build docker-build docker-dev-build
+max-build: autoupdate full-build docker-build-multi docker-dev-build
 
 fast-docker-build: just-unit bump-version-build docker-publish-one
 

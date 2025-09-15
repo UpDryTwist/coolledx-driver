@@ -191,3 +191,12 @@ node_modules/
 local-instance/
 
 development_notes/
+
+# Additional exclusions to reduce build context
+docker_scripts/
+*.md
+LICENSE
+.copier-answers.yml
+htmlcov/
+.coverage*
+*.log

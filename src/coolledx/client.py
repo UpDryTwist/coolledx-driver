@@ -39,6 +39,7 @@ DEFAULT_CONNECTION_RETRIES = (
 )
 CONNECTION_RETRY_DELAY = 1.0  # Seconds to wait between connection retries
 DEFAULT_DEVICE_NAME = "CoolLEDX"
+MIN_MANUFACTURER_DATA_LENGTH = 9  # Minimum length to contain height and width data
 
 LOGGER = logging.getLogger(__name__)
 
@@ -119,48 +120,13 @@ class Client:
         while retries_remaining > 0:
             try:
                 retries_remaining -= 1
-                if self.device_address is None:
-                    LOGGER.debug("Locating device by name %s", self.device_name)
-                    ble_device = await BleakScanner.find_device_by_name(  # type: ignore[misc]
-                        name=(
-                            self.device_name
-                            if self.device_name
-                            else DEFAULT_DEVICE_NAME
-                        ),
-                        timeout=self.connection_timeout,
-                    )
-                else:
-                    LOGGER.debug("Locating device by address %s", self.device_address)
-                    ble_device = await BleakScanner.find_device_by_address(
-                        # type: ignore[misc]
-                        device_identifier=self.device_address,
-                        timeout=self.connection_timeout,
-                    )
+                ble_device, height, width = await self._discover_device()
 
                 if ble_device is None:
                     LOGGER.debug("Unable to locate a CoolLEDX/M device when scanning.")
                     raise BleakError(
                         "Unable to locate a CoolLEDX/M device when scanning.",
                     )
-
-                # In theory, we are supposed to now fetch
-                # BleakScanner.discovered_devices_and_advertisement_data and iterate
-                # through to re-find our device and the associated advertisement data.
-                # Instead, just pull the metadata, as it's still supported.  Eat the
-                # warning.
-                # TODO:  Fix this to read the advertisement data during the scan, which
-                #  will require rewriting the entire scanning process :(.
-                manufacturer_data = ble_device.metadata.get("manufacturer_data", {})  # type: ignore[misc]
-                (_key, value) = next(iter(manufacturer_data.items()))
-                # Manufacturer data:
-                # [00 .. 05] = MAC address
-                # [06] = height
-                # [07] = 0?
-                # [08] = width
-                # [09] = 1?
-                # [10] = 0?
-                height = value[6]
-                width = value[8]
 
                 bleak_client = BleakClient(
                     ble_device,
@@ -196,6 +162,85 @@ class Client:
             self.characteristic_uuid,
             self.handle_notify,
         )
+
+    async def _discover_device(self) -> tuple[BLEDevice | None, int, int]:
+        """
+        Discover a CoolLEDX/M device and extract height/width from advertisement data.
+
+        Returns a tuple of (device, height, width) or (None, 0, 0) if not found.
+        """
+        LOGGER.debug("Scanning for devices...")
+
+        # Use the new Bleak API to discover devices with advertisement data
+        devices = await BleakScanner.discover(
+            timeout=self.connection_timeout,
+            return_adv=True,
+        )
+
+        target_device_name = (
+            self.device_name if self.device_name else DEFAULT_DEVICE_NAME
+        )
+
+        for device, advertisement_data in devices.values():
+            # Check if this is the device we're looking for
+            if self.device_address is not None:
+                # Looking for specific address
+                if device.address.lower() != self.device_address.lower():
+                    continue
+            elif device.name != target_device_name:
+                # Looking for specific device name
+                continue
+
+            LOGGER.debug("Found target device: %s (%s)", device.name, device.address)
+
+            # Extract height and width from manufacturer data
+            if not advertisement_data.manufacturer_data:
+                LOGGER.warning("Device %s has no manufacturer data", device.address)
+                continue
+
+            try:
+                # Get the first (and typically only) manufacturer data entry
+                # We don't need the manufacturer ID, just the data
+                value = next(iter(advertisement_data.manufacturer_data.values()))
+
+                # Manufacturer data format:
+                # [00 .. 05] = MAC address
+                # [06] = height
+                # [07] = 0?
+                # [08] = width
+                # [09] = 1?
+                # [10] = 0?
+                if len(value) < MIN_MANUFACTURER_DATA_LENGTH:
+                    LOGGER.warning(
+                        "Device %s manufacturer data too short: %s",
+                        device.address,
+                        value.hex(),
+                    )
+                    continue
+
+                height = value[6]
+                width = value[8]
+
+                LOGGER.debug(
+                    "Device %s dimensions: %dx%d",
+                    device.address,
+                    width,
+                    height,
+                )
+
+            except (IndexError, StopIteration) as e:
+                LOGGER.warning(
+                    "Failed to parse manufacturer data for device %s: %s",
+                    device.address,
+                    e,
+                )
+                continue
+            else:
+                return device, height, width
+
+        # Device not found
+        LOGGER.debug("Target device not found in scan results")
+        return None, 0, 0
 
     def handle_notify(self, sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """

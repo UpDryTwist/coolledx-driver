@@ -1,4 +1,4 @@
-FROM python:3.11-buster AS builder
+FROM python:3.11-slim-bookworm AS builder
 
 WORKDIR /app
 
@@ -14,11 +14,11 @@ ENV POETRY_NO_INTERACTION=1 \
     GROUP=dockergroup \
     GROUP_ID=1000
 
-COPY --chown=${USER}:${GROUP} --chmod=0755 pyproject.toml poetry.lock README.md /app/
+COPY --chown=${USER}:${GROUP}--chmod=0755 pyproject.toml poetry.lock /app/
 
 RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
 
-FROM python:3.11-slim-buster AS runtime
+FROM python:3.11-slim-bookworm AS runtime
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ ENV VIRTUAL_ENV=/app/.venv \
     GROUP=dockergroup \
     GROUP_ID=1000
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gosu procps \
     fontconfig \
     fonts-dejavu-core \
@@ -39,7 +39,8 @@ RUN apt-get update && apt-get install -y \
     bluetooth \
     bluez \
     tshark \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
     useradd \
@@ -53,12 +54,12 @@ RUN groupadd --gid "${GROUP_ID}" "${GROUP}" && \
     chown -R "${USER}":"${GROUP}" /config /logs && \
     chmod -R a+rwX /config /logs
 
-COPY --from=builder --chown=${USER}:${GROUP} --chmod=0755 ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+COPY --from=builder --chown=${USER}:${GROUP} --chmod=0755 /app/.venv /app/.venv
 
-COPY --chown=${USER}:${GROUP} --chmod=0755 src/coolledx /app/coolledx
-COPY --chown=${USER}:${GROUP} --chmod=0755 run_scripts /app/run_scripts
-COPY --chown=${USER}:${GROUP} --chmod=0755 utils       /app/utils
-# COPY --chown=${USER}:${GROUP} --chmod=a+rw default_config /config
+COPY --chown=dockeruser:dockergroup --chmod=0755 src/coolledx /app/coolledx
+COPY --chown=dockeruser:dockergroup --chmod=0755 run_scripts /app/run_scripts
+COPY --chown=dockeruser:dockergroup --chmod=0755 utils       /app/utils
+# COPY --chown=dockeruser:dockergroup --chmod=a+rw default_config /config
 
 # USER "${USER}"
 
