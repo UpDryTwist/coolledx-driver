@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "CoolLEDX Driver"
-version = "0.1.1-dev16"
+version = "0.1.1-dev17"
 description = "Driver for the CoolLEDX LED signs (signs managed by CoolLED1248 app)"
 authors = ["UpDryTwist <tathamg@gmail.com>"]
 license = "MIT"

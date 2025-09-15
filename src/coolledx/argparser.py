@@ -31,6 +31,8 @@ DEFAULT_ANIMATION = None
 DEFAULT_IMAGE = None
 DEFAULT_JT = None
 DEFAULT_DEVICE_NAME = "CoolLEDX"
+DEFAULT_CONNECTION_TIMEOUT = 10.0
+DEFAULT_CONNECTION_RETRIES = 5
 
 
 def auto_int(x: str) -> int:
@@ -108,6 +110,18 @@ def parse_standard_arguments() -> argparse.Namespace:
         help="Font height of the text",
     )
     parser.add_argument("-l", "--log", default=DEFAULT_LOGGING, help="Logging level")
+    parser.add_argument(
+        "--connection-timeout",
+        type=float,
+        default=DEFAULT_CONNECTION_TIMEOUT,
+        help="Timeout in seconds for Bluetooth connection attempts (default: 10.0)",
+    )
+    parser.add_argument(
+        "--connection-retries",
+        type=int,
+        default=DEFAULT_CONNECTION_RETRIES,
+        help="Number of connection retry attempts (default: 5)",
+    )
     parser.add_argument(
         "-o",
         "--onoff",

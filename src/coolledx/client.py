@@ -143,7 +143,7 @@ class Client:
                 self.height = height
                 self.width = width
                 break
-            except BleakError as e:
+            except (BleakError, TimeoutError, asyncio.CancelledError) as e:
                 LOGGER.warning(
                     "Connection to CoolLEDX (address: %s) received exception: %s",
                     self.device_address,
@@ -155,6 +155,11 @@ class Client:
                         self.connection_retries,
                     )
                     raise
+                LOGGER.info(
+                    "Retrying connection in %s seconds (%s attempts remaining)...",
+                    CONNECTION_RETRY_DELAY,
+                    retries_remaining,
+                )
                 await asyncio.sleep(CONNECTION_RETRY_DELAY)
         if self.bleak_client is None:
             raise TypeError("bleak_client should not be None after connection.")
