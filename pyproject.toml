@@ -58,7 +58,7 @@ sphinx = ">=7.2.6,<9.0.0"
 sphinx-rtd-theme = "^3.0.2"
 pyright = "^1.1.390"
 pytest-cov = "^7.0.0"
-bump-my-version = "^1.2.2"
+bump-my-version = "^1.2.3"
 copier = "^9.5.0"
 
 [build-system]
