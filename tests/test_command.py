@@ -9,6 +9,7 @@ import platform
 import pytest
 
 from coolledx.commands import Command, SetAnimation, SetImage, SetSpeed, SetText
+from coolledx.hardware import CoolLEDX
 from coolledx.render import HeightTreatment, HorizontalAlignment, VerticalAlignment
 
 
@@ -32,11 +33,15 @@ def test_escape_bytes() -> None:
 
 def test_set_speed() -> None:
     """Test the SetSpeed command."""
+    hardware = CoolLEDX(1, 32, 16)
     command = SetSpeed(0x01)
+    command.set_hardware(hardware)
     assert command.get_command_hexstr(append_newline=False) == "0100020607020503"
     command = SetSpeed(0x00)
+    command.set_hardware(hardware)
     assert command.get_command_hexstr(append_newline=False) == "01000206070003"
     command = SetSpeed(0xFF)
+    command.set_hardware(hardware)
     assert command.get_command_hexstr(append_newline=False) == "0100020607ff03"
     with pytest.raises(ValueError, match="Speed must be between 0x00 and 0xFF"):
         SetSpeed(-1)
@@ -125,13 +130,15 @@ def test_set_image() -> None:
         "e0000000004e03",
     ]
 
+    command = SetImage(
+        file_path_in_test_dir("test-image.png"),
+        height_treatment=HeightTreatment.CROP_PAD,
+        horizontal_alignment=HorizontalAlignment.CENTER,
+        vertical_alignment=VerticalAlignment.BOTTOM,
+    )
+    command.set_hardware(CoolLEDX(1, 32, 16))
     confirm_chunks(
-        SetImage(
-            file_path_in_test_dir("test-image.png"),
-            height_treatment=HeightTreatment.CROP_PAD,
-            horizontal_alignment=HorizontalAlignment.CENTER,
-            vertical_alignment=VerticalAlignment.BOTTOM,
-        ).get_command_chunks(),
+        command.get_command_chunks(),
         correct_values,
     )
 
@@ -230,10 +237,12 @@ def test_set_animation() -> None:
         "00001b03",
     ]
 
+    command = SetAnimation(
+        file_path_in_test_dir("test-animation.gif"),
+        horizontal_alignment=HorizontalAlignment.LEFT,
+    )
+    command.set_hardware(CoolLEDX(1, 32, 16))
     confirm_chunks(
-        SetAnimation(
-            file_path_in_test_dir("test-animation.gif"),
-            horizontal_alignment=HorizontalAlignment.LEFT,
-        ).get_command_chunks(),
+        command.get_command_chunks(),
         correct_values,
     )

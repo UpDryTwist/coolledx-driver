@@ -178,3 +178,7 @@ mcp.json
 
 # Docker local testing
 local-instance/
+
+# Our implementation notes - private for now
+coolled.md
+DeviceManager.java

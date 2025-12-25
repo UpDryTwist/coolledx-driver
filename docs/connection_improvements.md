@@ -118,7 +118,7 @@ python utils/tweak_sign.py -t "Hello World" \
 A test script `utils/test_connection_improvements.py` has been created to verify the improvements work correctly. It tests:
 
 1. TimeoutError handling
-2. CancelledError handling  
+2. CancelledError handling
 3. Retry logic functionality
 
 Run the tests with:

@@ -49,6 +49,11 @@ MAX_BYTE_VALUE = 0xFF
 MIN_BYTE_VALUE = 0x00
 MUSIC_BAR_COUNT = 8
 
+# Constants for color types
+COLOR_TYPE_MONO = 0x00
+COLOR_TYPE_7COLOR = 0x01
+COLOR_TYPE_FULLRGB = 0x02
+
 
 class CoolLedError(Exception):
     """Base class for exceptions in this module."""
@@ -83,17 +88,13 @@ class CommandStatus(Enum):
     ACKNOWLEDGED = 2
     ERROR = 3
 
-
 class Command(abc.ABC):
     """Abstract base class for commands."""
 
-    sign_height: int
-    sign_width: int
-    dimensions_set: bool = False
     command_status: CommandStatus = CommandStatus.NOT_STARTED
     error_code: ErrorCode = ErrorCode.UNKNOWN
     future: Future | None = None
-    hardware: CoolLED = CoolLED()
+    hardware: CoolLED | None = None
 
     @abc.abstractmethod
     def get_command_raw_data_chunks(self) -> list[bytearray]:
@@ -117,15 +118,15 @@ class Command(abc.ABC):
         data = re.sub(re.compile(b"\x01", re.MULTILINE), b"\x02\x05", data)
         return re.sub(re.compile(b"\x03", re.MULTILINE), b"\x02\x07", data)
 
-    def set_dimensions(self, width: int, height: int) -> None:
-        """Set the dimensions of the sign."""
-        self.sign_width = width
-        self.sign_height = height
-        self.dimensions_set = True
-
     def set_hardware(self, hardware: CoolLED) -> None:
         """Set the hardware type."""
         self.hardware = hardware
+
+    def get_hardware(self) -> CoolLED:
+        """Get the hardware type."""
+        if self.hardware is None:
+            raise ValueError("Hardware not set")
+        return self.hardware
 
     def set_future(self, future: Future) -> None:
         """Set the future for this command."""
@@ -138,12 +139,18 @@ class Command(abc.ABC):
     @property
     def get_device_width(self) -> int:
         """Get the device width, using default if not set."""
-        return self.sign_width if self.dimensions_set else DEFAULT_DEVICE_WIDTH
+        try:
+            return self.get_hardware().get_device_width()
+        except ValueError:
+            return DEFAULT_DEVICE_WIDTH
 
     @property
     def get_device_height(self) -> int:
         """Get the device height, using default if not set."""
-        return self.sign_height if self.dimensions_set else DEFAULT_DEVICE_HEIGHT
+        try:
+            return self.get_hardware().get_device_height()
+        except ValueError:
+            return DEFAULT_DEVICE_HEIGHT
 
     @staticmethod
     def expect_notify() -> bool:
@@ -159,12 +166,7 @@ class Command(abc.ABC):
         """Check if this is a raw command that shouldn't be encoded/escaped."""
         return False
 
-    def create_command(self, raw_data: bytearray) -> bytearray:
-        """Create the command."""
-        extended_data = bytearray().join(
-            [len(raw_data).to_bytes(2, byteorder="big"), raw_data],
-        )
-        return bytearray().join([b"\x01", self.escape_bytes(extended_data), b"\x03"])
+
 
     @staticmethod
     def split_bytearray(data: bytearray, chunksize: int) -> list[bytearray]:
@@ -271,7 +273,7 @@ class Initialize(Command):
 
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the initialization command data."""
-        return [bytearray.fromhex(f"{self.hardware.cmdbyte_initialize():02x} 01")]
+        return [bytearray.fromhex(f"{self.get_hardware().cmdbyte_initialize():02x} 01")]
 
 
 class SetSpeed(Command):
@@ -288,7 +290,7 @@ class SetSpeed(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the speed command data."""
         return [
-            bytearray.fromhex(f"{self.hardware.cmdbyte_speed():02x} {self.speed:02X}"),
+            bytearray.fromhex(f"{self.get_hardware().cmdbyte_speed():02x} {self.speed:02X}"),
         ]
 
 
@@ -309,7 +311,7 @@ class SetBrightness(Command):
         """Get the brightness command data."""
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_brightness():02x} {self.brightness:02X}",
+                f"{self.get_hardware().cmdbyte_brightness():02x} {self.brightness:02X}",
             ),
         ]
 
@@ -326,7 +328,7 @@ class TurnOnOffApp(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the turn on/off app command data."""
         onoff = 0x01 if self.on else 0x00
-        return [bytearray.fromhex(f"{self.hardware.cmdbyte_switch():02x} {onoff:02X}")]
+        return [bytearray.fromhex(f"{self.get_hardware().cmdbyte_switch():02x} {onoff:02X}")]
 
 
 class TurnOnOffButton(Command):
@@ -341,10 +343,11 @@ class TurnOnOffButton(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the turn on/off button command data."""
         onoff = 0x01 if self.on else 0x00
+        hardware = self.get_hardware()
         command = (
-            self.hardware.cmdbyte_buttonon()
+            hardware.cmdbyte_buttonon()
             if self.on
-            else self.hardware.cmdbyte_buttonoff()
+            else hardware.cmdbyte_buttonoff()
         )
         return [bytearray.fromhex(f"{command:02X} {onoff:02X}")]
 
@@ -355,7 +358,7 @@ class ShowChargingAnimation(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the charging animation command data."""
         return [
-            bytearray(self.hardware.cmdbyte_showicon().to_bytes(1, byteorder="big")),
+            bytearray(self.get_hardware().cmdbyte_showicon().to_bytes(1, byteorder="big")),
         ]
 
     @staticmethod
@@ -377,7 +380,7 @@ class InvertDisplay(Command):
         """Get the invert display command data."""
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_invertdisplay():02x} {self.inverted:02X}",
+                f"{self.get_hardware().cmdbyte_invertdisplay():02x} {self.inverted:02X}",
             ),
         ]
 
@@ -394,7 +397,7 @@ class InvertOrSomething(Command):
         """Get the mirror display command data."""
         return [
             bytearray(
-                self.hardware.cmdbyte_invertorsomething().to_bytes(1, byteorder="big"),
+                self.get_hardware().cmdbyte_invertorsomething().to_bytes(1, byteorder="big"),
             ),
         ]
 
@@ -421,7 +424,7 @@ class StartupWithBatteryLevel(Command):
         """Get the startup with battery level command data."""
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_initialize():02x} {self.battery_level:02X}",
+                f"{self.get_hardware().cmdbyte_initialize():02x} {self.battery_level:02X}",
             ),
         ]
 
@@ -432,7 +435,7 @@ class PowerDown(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the power down command data."""
         return [
-            bytearray(self.hardware.cmdbyte_powerdown().to_bytes(1, byteorder="big")),
+            bytearray(self.get_hardware().cmdbyte_powerdown().to_bytes(1, byteorder="big")),
         ]
 
     @staticmethod
@@ -453,7 +456,7 @@ class SetMode(Command):
     def get_command_raw_data_chunks(self) -> list[bytearray]:
         """Get the set mode command data."""
         return [
-            bytearray.fromhex(f"{self.hardware.cmdbyte_mode():02x} {self.mode:02X}"),
+            bytearray.fromhex(f"{self.get_hardware().cmdbyte_mode():02x} {self.mode:02X}"),
         ]
 
     @staticmethod
@@ -483,7 +486,7 @@ class SetMusicBars(Command):
         # that heights and colors are integrated into a half byte each.
         return [
             bytearray.fromhex(
-                f"{self.hardware.cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}",
+                f"{self.get_hardware().cmdbyte_music():02x} {self.heights.hex()} {self.colors.hex()}",
             ),
         ]
 
@@ -556,11 +559,12 @@ class SetText(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
+        hardware = self.get_hardware()
         return self.chop_up_data(
             raw_text,
-            self.hardware.cmdbyte_text()
+            hardware.cmdbyte_text()
             if self.render_as_text
-            else self.hardware.cmdbyte_image(),
+            else hardware.cmdbyte_image(),
         )
 
     @staticmethod
@@ -608,7 +612,7 @@ class SetImage(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_data, self.hardware.cmdbyte_image())
+        return self.chop_up_data(raw_data, self.get_hardware().cmdbyte_image())
 
     @staticmethod
     def expect_notify() -> bool:
@@ -659,7 +663,7 @@ class SetAnimation(Command):
             horizontal_alignment=self.horizontal_alignment,
             vertical_alignment=self.vertical_alignment,
         )
-        return self.chop_up_data(raw_data, self.hardware.cmdbyte_animation())
+        return self.chop_up_data(raw_data, self.get_hardware().cmdbyte_animation())
 
     @staticmethod
     def expect_notify() -> bool:
@@ -707,11 +711,12 @@ class SetJT(Command):
             self.horizontal_alignment,
             self.vertical_alignment,
         )
+        hardware = self.get_hardware()
         return self.chop_up_data(
             raw_data,
-            self.hardware.cmdbyte_image()
+            hardware.cmdbyte_image()
             if render_as_image
-            else self.hardware.cmdbyte_animation(),
+            else hardware.cmdbyte_animation(),
         )
 
     @staticmethod

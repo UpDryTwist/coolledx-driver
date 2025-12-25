@@ -39,7 +39,7 @@ DEFAULT_CONNECTION_RETRIES = (
 )
 CONNECTION_RETRY_DELAY = 1.0  # Seconds to wait between connection retries
 DEFAULT_DEVICE_NAME = "CoolLEDX"
-MIN_MANUFACTURER_DATA_LENGTH = 9  # Minimum length to contain height and width data
+MIN_MANUFACTURER_DATA_LENGTH = 11  # Minimum length to contain our required data
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,10 +54,8 @@ class Client:
     connection_timeout: float
     command_timeout: float
     connection_retries: int
-    height: int
-    width: int
     current_command: Command | None = None
-    hardware: CoolLED = CoolLED()
+    hardware: CoolLED
 
     def __init__(
         self,
@@ -120,12 +118,12 @@ class Client:
         while retries_remaining > 0:
             try:
                 retries_remaining -= 1
-                ble_device, height, width = await self._discover_device()
+                ble_device, height, width, color_mode, firmware_version = await self._discover_device()
 
                 if ble_device is None:
-                    LOGGER.debug("Unable to locate a CoolLEDX/M device when scanning.")
+                    LOGGER.debug("Unable to locate a CoolLED* device when scanning.")
                     raise BleakError(
-                        "Unable to locate a CoolLEDX/M device when scanning.",
+                        "Unable to locate a CoolLED* device when scanning.",
                     )
 
                 bleak_client = BleakClient(
@@ -138,14 +136,16 @@ class Client:
                 await bleak_client.connect()
                 LOGGER.debug("Connected to device: %s", ble_device)
                 # Wait to set these until we're sure it's a successful connection
+                if not ble_device.name:
+                    # This should never happen, but just in case
+                    raise BleakError("Device has no name")
                 self.ble_device = ble_device
                 self.bleak_client = bleak_client
-                self.height = height
-                self.width = width
+                self.hardware = CoolLED.get_class_for_string(ble_device.name)(height, width, color_mode, firmware_version)
                 break
             except (BleakError, TimeoutError, asyncio.CancelledError) as e:
                 LOGGER.warning(
-                    "Connection to CoolLEDX (address: %s) received exception: %s",
+                    "Connection to CoolLED* (address: %s) received exception: %s",
                     self.device_address,
                     e,
                 )
@@ -168,15 +168,15 @@ class Client:
             self.handle_notify,
         )
 
-    async def _discover_device(self) -> tuple[BLEDevice | None, int, int]:
+    async def _discover_device(self) -> tuple[BLEDevice | None, int, int, int, int]:
         """
-        Discover a CoolLEDX/M device and extract height/width from advertisement data.
+        Discover a CoolLED* device and extract height/width/color/firmware from advertisement data.
 
-        Returns a tuple of (device, height, width) or (None, 0, 0) if not found.
+        Returns a tuple of (device, height, width, color_mode, firmware_version) or (None, 0, 0, 0, 0) if not found.
         """
         LOGGER.debug("Scanning for devices...")
 
-        # Use the new Bleak API to discover devices with advertisement data
+        # Use the Bleak API to discover devices with advertisement data
         devices = await BleakScanner.discover(
             timeout=self.connection_timeout,
             return_adv=True,
@@ -210,11 +210,10 @@ class Client:
 
                 # Manufacturer data format:
                 # [00 .. 05] = MAC address
-                # [06] = height
-                # [07] = 0?
-                # [08] = width
-                # [09] = 1?
-                # [10] = 0?
+                # [06]     = height
+                # [07][08] = width
+                # [09]     = color mode (0 = mono, 1 = 7-color, 2 = full RGB)
+                # [10]     = Firmware version
                 if len(value) < MIN_MANUFACTURER_DATA_LENGTH:
                     LOGGER.warning(
                         "Device %s manufacturer data too short: %s",
@@ -224,13 +223,17 @@ class Client:
                     continue
 
                 height = value[6]
-                width = value[8]
+                width = value[7] << 8 | value[8]
+                color_mode = value[9]
+                firmware_version = value[10]
 
                 LOGGER.debug(
-                    "Device %s dimensions: %dx%d",
+                    "Device %s dimensions: %dx%d - color mode: %d - firmware version: %d",
                     device.address,
                     width,
                     height,
+                    color_mode,
+                    firmware_version,
                 )
 
             except (IndexError, StopIteration) as e:
@@ -241,11 +244,11 @@ class Client:
                 )
                 continue
             else:
-                return device, height, width
+                return device, height, width, color_mode, firmware_version
 
         # Device not found
         LOGGER.debug("Target device not found in scan results")
-        return None, 0, 0
+        return None, 0, 0, 0, 0
 
     def handle_notify(self, sender: BleakGATTCharacteristic, data: bytearray) -> None:
         """
@@ -290,7 +293,6 @@ class Client:
     async def send_command(self, command: Command) -> None:
         """Send a command to the device; wait for response if needed."""
         await self.force_connected()
-        command.set_dimensions(height=self.height, width=self.width)
         command.set_hardware(self.hardware)
         chunks = command.get_command_chunks()
         try:

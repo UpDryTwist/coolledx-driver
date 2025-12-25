@@ -1,5 +1,9 @@
 """Class for decoding the traffic."""
 
+COLOR_TYPE_MONO = 0x00
+COLOR_TYPE_7COLOR = 0x01
+COLOR_TYPE_FULLRGB = 0x02
+
 # Command byte constants
 CMD_MUSIC = 0x01
 CMD_TEXT = 0x02
