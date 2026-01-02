@@ -8,4 +8,5 @@ docker pull ${MY_REGISTRY}/coolledx:latest
 
 docker run --privileged -v /var/run/dbus:/var/run/dbus \
 	${MY_REGISTRY}/coolledx:latest \
+	--rm \
 	python3 /app/utils/scan.py "$@"
