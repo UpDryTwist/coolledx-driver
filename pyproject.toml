@@ -42,7 +42,7 @@ pythonVersion = "3.11"
 # Python held to < 3.14 for bleak purposes
 python = ">=3.11,<4.0"
 bleak = "^1.1.1"
-Pillow = "^11.3.0"
+Pillow = "^12.0.0"
 # This is just here so that you can run the utilities out of the Docker image ...
 pyshark = "^0.6.0"
 
